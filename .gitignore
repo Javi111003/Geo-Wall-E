@@ -1,0 +1,12 @@
+# cshart
+**/bin/*
+**/obj/*
+# vim
+*~
+*.swp
+*.swo
+# tex
+*.aux
+*.log
+*.toc
+
