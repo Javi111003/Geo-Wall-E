@@ -43,8 +43,8 @@ public class TestParser
         result = this._Interpret("!1;");
         Assert.Equal(false, result);
 
-	result = this._Interpret("var a = !1;!a;");
-	Assert.Equal(true, result);
+        result = this._Interpret("a = !1;!a;");
+        Assert.Equal(true, result);
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class TestParser
 
     [Fact]
     public void TestAssignment() {
-        var result = this._Interpret("var a = 5; a;");
+        var result = this._Interpret("a = 5; a;");
         Assert.Equal(5, result);
     }
 
@@ -106,7 +106,7 @@ public class TestParser
 
     [Fact]
     public void TestFinline() {
-        var result = this._Interpret("function blob(x) => x*x; blob(5);");
+        var result = this._Interpret("blob(x) = x*x; blob(5);");
         Assert.Equal(25, result);
     }
 
@@ -127,21 +127,21 @@ public class TestParser
 
     [Fact]
     public void TestRecursive() {
-        var result = this._Interpret("function fib(n) => if (n > 1) fib(n-1) + fib(n-2) else 1;(fib(5));");
+        var result = this._Interpret("fib(n) = if (n > 1) fib(n-1) + fib(n-2) else 1;(fib(5));");
         Assert.Equal(8, result);
     }
 
     [Fact]
     public void TestFnEmptyArgs() {
-        var result = this._Interpret("function blob() => \"doko\"; blob();");
+        var result = this._Interpret("blob() = \"doko\"; blob();");
         Assert.Equal("doko", result);
     }
 
     [Fact]
     public void TestLocalContext() {
-        var result = this._Interpret("function x() => 5; function blob(x) => x;blob(3);");
+        var result = this._Interpret("x() = 5; blob(x) = x;blob(3);");
         Assert.Equal(3, result);
-        result = this._Interpret("var x = 5; function blob() => x;blob();");
+        result = this._Interpret("x = 5; blob() = x;blob();");
         Assert.Equal(5, result);
     }
 
@@ -151,5 +151,13 @@ public class TestParser
         Assert.Equal(-8, result);
         result = this._Interpret("-5 - -3;");
         Assert.Equal(-2, result);
+    }
+
+
+    [Fact]
+    public void TestTypedMultiDecl() {
+        // [function] [name] == [function] = [type]();
+        var result = this._Interpret("five() = 5;five p1;p1;");
+        Assert.Equal(5, result);
     }
 }

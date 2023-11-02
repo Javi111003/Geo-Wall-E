@@ -31,6 +31,12 @@ public class TypeError : Exception {
     public TypeError(string message, Exception inner): base(message, inner) {}
 }
 
+public class RuntimeError : Exception {
+    public RuntimeError() {}
+    public RuntimeError(string message): base(message) {}
+    public RuntimeError(string message, Exception inner): base(message, inner) {}
+}
+
 
 public class Context : Dictionary<string, dynamic> {
 
@@ -104,6 +110,12 @@ public class FloatLiteral : Literal {
 public class BoolLiteral : Literal {
 
     public BoolLiteral(bool val) {
+        this._val = val;
+    }
+}
+
+public class SequenceLiteral : Literal {
+    public SequenceLiteral(string val) {
         this._val = val;
     }
 }
@@ -369,7 +381,12 @@ public class Function : AST {
         Variable arg;
         for (int i = 0; i < fun_args.blocks.Count(); i++) {
             arg = (Variable) fun_args.blocks[i];
-            fun_ctx[arg.name] = this.args.blocks[i].Eval(ctx);
+            try {
+                fun_ctx[arg.name] = this.args.blocks[i].Eval(ctx);
+            }
+            catch (System.ArgumentOutOfRangeException) {
+                throw new RuntimeError($"Too few/many arguments for function {this.name}");
+            }
         }
         // allow recursivity
         fun_ctx[this.name] = fun_decl;
@@ -457,7 +474,7 @@ public class Parser {
             this.current_token = this.lexer.GetNextToken();
         }
         else {
-            this.Error(new UnexpectedToken($"Expected {token_type} found {this.current_token.type}."));
+            this.Error(new SyntaxError($"Expected {token_type} found {this.current_token.type}."));
         }
     }
 
@@ -483,11 +500,14 @@ public class Parser {
        return new BlockNode(args);
     }
 
-    public AST Namespace() {
-        string name = this.current_token.val;
-        AST node;
+    public AST Namespace(string? name=null) {
+        if (name is null) {
+            name = this.current_token.val;
 
-        this.Eat(Tokens.ID);
+            this.Eat(Tokens.ID);
+        }
+
+        AST node;
         BlockNode args = this.Arguments();
         if (args is not null) {
             node = new Function(name, args);
@@ -501,58 +521,140 @@ public class Parser {
     public Lambda Letin() {
         // meme lambda-like aberration with bizarre use-cases
         this.Eat(Tokens.LET);
-        BlockNode variables = this.Assignment();
+        BlockNode variables = this.Declaration();
         this.Eat(Tokens.IN);
 
         return new Lambda(variables, this.Expr());
     }
 
-    public BlockNode Assignment() {
+    public AST AssignSequence(List<AST> variables) {
+        // change the value of variable declarations from undefined to an item of the sequence
+        
+        // XXX
+        return this.LiteralNode();
+    }
+
+    public (string, string?) _Declare(List<AST> variables, List<string> names) {
+        // helper function to declare a variable
+        // the first time it can have a type before the name 
+        // so it's an special case
+        //
+        // we modify "variables" and "names"
+
+        string name = this.current_token.val;
+
+        this.Eat(Tokens.ID);
+        // check sequence
+        SequenceLiteral seq = null;
+        string type = null;
+        if (this.current_token.type == Tokens.SEQUENCE) {
+            seq = (SequenceLiteral) this.LiteralNode();
+            // the first string is the type
+            type = name;
+            name = this.current_token.val;
+            this.Eat(Tokens.ID);
+        }
+        else if (this.current_token.type == Tokens.ID) {
+            // NOTE we duplicate this code because if a sequence was declared here 
+            // it has to be followed by an ID or else is a syntax error
+            
+            // name
+            // what we got before was the type
+            type = name;
+            name = this.current_token.val;
+            this.Eat(Tokens.ID);
+        }
+        else if (this.current_token.type == Tokens.LPAREN) {
+            // fug, it's a function
+            return (name, null);
+        }
+
+        AST val;
+        if (this.current_token.type == Tokens.ASSIGN) {
+            // asignation
+            this.Eat(Tokens.ASSIGN);
+            val = this.Expr();
+        }
+        else {
+            // declaration
+            // [type] {args} [name]; is translated to name = type(args)
+            // where type is a function
+            // thus
+            Function fun = new Function(type, new BlockNode(new List<AST>{seq}));
+            val = fun;
+
+        }
+        VariableDeclaration variable = new VariableDeclaration(name, val);
+        variables.Add(variable);
+
+        names.Add(name);
+
+        return (name, type);
+    }
+
+    public BlockNode Declaration() {
         List<string> names = new List<string>();
         List<AST> variables = new List<AST>();
 
-        string name = this.current_token.val;
-        names.Add(name);
+        (string name, string type) = this._Declare(variables, names);
+        if (this.current_token.type == Tokens.LPAREN) {
+            // function
+            return new BlockNode(new List<AST>{this.FunctionDecl(name)});
+        }
+        VariableDeclaration variable;
 
-        this.Eat(Tokens.ID);
-        this.Eat(Tokens.ASSIGN);
-        AST val = this.Expr();
-
-        VariableDeclaration variable = new VariableDeclaration(name, val);
-        variables.Add(variable);
 
         while (this.current_token.type == Tokens.COMMA) {
             this.Eat(Tokens.COMMA);
             name = this.current_token.val;
             names.Add(name);
 
+            AST val;
             this.Eat(Tokens.ID);
-            this.Eat(Tokens.ASSIGN);
-            val = this.Expr();
+
+            if (this.current_token.type == Tokens.ASSIGN) {
+                this.Eat(Tokens.ASSIGN);
+                val = this.Expr();
+            }
+            else {
+                if (type is null) {
+                    // undefined
+                    val = null;
+                }
+                else {
+                    Function fun = new Function(type, new BlockNode(new List<AST>()));
+                    val = fun;
+                }
+            }
 
             variable = new VariableDeclaration(name, val);
             variables.Add(variable);
         }
 
+        if (this.current_token.type == Tokens.ASSIGN) {
+            // sequence
+            this.Eat(Tokens.ASSIGN);
+            return new BlockNode(new List<AST>{this.AssignSequence(variables)});
+        }
+
+        VariableDeclaration _variable = (VariableDeclaration) variables[0];
+        if (_variable.expression is null) {
+            // [name];
+            return new BlockNode(new List<AST>{this.Namespace(name)});
+        }
+
         BlockNode multi_decl = new BlockNode(variables);
 
         return multi_decl;
-    }
+   }
 
-    public BlockNode Declaration() {
-        this.Eat(Tokens.VAR);
-
-        return this.Assignment();
-    }
-
-    public AST FunctionDecl() {
-        this.Eat(Tokens.FUNCTION);
-        string name = this.current_token.val;
-        this.Eat(Tokens.ID);
+    public AST FunctionDecl(string name) {
+        //string name = this.current_token.val;
+        //this.Eat(Tokens.ID);
         BlockNode args = this.Arguments();
 
-        if (this.current_token.type == Tokens.FINLINE) {
-            this.Eat(Tokens.FINLINE);
+        if (this.current_token.type == Tokens.ASSIGN) {
+            this.Eat(Tokens.ASSIGN);
             // args are variables so we can use them here too
             return new FunctionDeclaration(name, args, this.Expr());
         }
@@ -596,7 +698,7 @@ public class Parser {
         }
 
         // else
-        this.Error(new Exception($"Invalid literal {token.val} {token.type}"));
+        this.Error(new SyntaxError($"Invalid literal {token.val} {token.type}"));
         return null;
     }
 
@@ -698,7 +800,7 @@ public class Parser {
                 ast = typeof(Lower);
             }
             else {
-                this.Error(new Exception($"Unknown operand: {token.type}"));
+                this.Error(new SyntaxError($"Unknown operand: {token.type}"));
             }
 
             node = (AST) Activator.CreateInstance(ast, args: new Object[] {node, this.Factor()});
@@ -708,17 +810,29 @@ public class Parser {
     }
 
     public AST _Parse() {
-        AST node;
+        AST node = null;
 
-        if (this.current_token.type == Tokens.VAR) {
-            node = this.Declaration();
-        }
-        else if (this.current_token.type == Tokens.FUNCTION) {
-            node = this.FunctionDecl();
-        }
-        else {
+        this.lexer.Save();
+        var token = this.current_token;
+
+        try {
             node = this.Expr();
         }
+        catch (SyntaxError){}
+
+
+        if (this.current_token.type == Tokens.END) {
+            // pure expression
+            return node;
+        }
+
+
+        this.lexer.Load();
+        this.current_token = token;
+        if (this.current_token.type == Tokens.ID) {
+            node = this.Declaration();
+        }
+
         if (this.current_token.type != Tokens.END) {
             this.Error(new SyntaxError("Expected ';'"));
         }
