@@ -37,6 +37,11 @@ public class RuntimeError : Exception {
     public RuntimeError(string message, Exception inner): base(message, inner) {}
 }
 
+public static class BestGuess {
+    public static int Expression = 1;
+    public static int Declaration = 2;
+}
+
 
 public class Context : Dictionary<string, dynamic> {
 
@@ -809,27 +814,61 @@ public class Parser {
         return node;
     }
 
+    public int Guess() {
+        // give an (educated) guess of what kind of tokens are coming next and how they should be parsed
+
+        var token = this.current_token.type;
+        // 2 <=> declaration
+        // if there are not other tokens but these two
+        int count_ids = 0;
+        int _let = 0;
+        int others = 0;
+        int assign = 0;
+        Token _token;
+
+        while (token != Tokens.END && token != Tokens.EOF) {
+            if (token == Tokens.ID) {
+                count_ids += 1;
+            }
+            else if (token == Tokens.ASSIGN) {
+                // could be let
+                if (_let == 0) {
+                    return BestGuess.Declaration;
+                }
+                // let in the left side <=> expr
+                return BestGuess.Expression;
+            }
+            else if (token == Tokens.LET) {
+                _let += 1;
+            }
+            else {
+                others += 1;
+            }
+
+            token = this.lexer.GetNextToken().type;
+        }
+
+        if (count_ids == 2 && others == 0) {
+            return BestGuess.Declaration;
+        }
+        return BestGuess.Expression;
+    }
+
     public AST _Parse() {
         AST node = null;
 
         this.lexer.Save();
         var token = this.current_token;
+        int guessed = this.Guess();
 
-        try {
-            node = this.Expr();
-        }
-        catch (SyntaxError){}
-
-
-        if (this.current_token.type == Tokens.END) {
-            // pure expression
-            return node;
-        }
-
-
+        // restore state
         this.lexer.Load();
         this.current_token = token;
-        if (this.current_token.type == Tokens.ID) {
+
+        if (guessed == BestGuess.Expression) {
+            node = this.Expr();
+        }
+        else if (guessed == BestGuess.Declaration) {
             node = this.Declaration();
         }
 
