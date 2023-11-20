@@ -45,13 +45,12 @@ public class TestLexer
 
     [Fact]
     public void TestFunction() {
-        Lexer l = new Lexer("function a(n) => 5 ");
-        Assert.Equal(l.GetNextToken(), new Token(Tokens.FUNCTION, "function"));
+        Lexer l = new Lexer("a(n) = 5 ");
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "a"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.LPAREN, "("));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "n"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.RPAREN, ")"));
-        Assert.Equal(l.GetNextToken(), new Token(Tokens.FINLINE, "=>"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ASSIGN, "="));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.INTEGER, "5"));
     }
 

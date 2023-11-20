@@ -42,6 +42,13 @@ public static class BestGuess {
     public static int Declaration = 2;
 }
 
+public static class OOPTools {
+    public static bool HasAttribute(this object objectToCheck, string methodName) {
+        var type = objectToCheck.GetType();
+        return type.GetMethod(methodName) != null;
+    } 
+}
+
 
 public class Context : Dictionary<string, dynamic> {
 
@@ -50,7 +57,7 @@ public class Context : Dictionary<string, dynamic> {
             try {
                 return base[key];
             }
-            catch(System.Collections.Generic.KeyNotFoundException e) {
+            catch(System.Collections.Generic.KeyNotFoundException) {
                 throw new NameError(key + " is not defined");
             }
         }
@@ -70,6 +77,18 @@ public class Context : Dictionary<string, dynamic> {
 }
 
 public class AST {
+
+    private string type;
+
+    public virtual string Type {
+        get {return this.type;}
+        set {this.type = value;}
+    }
+
+    public AST(string Type="DYNAMIC") {
+        this.Type = Type;
+    }
+
     public virtual dynamic Eval(Context ctx) {
         return "";
     }
@@ -77,214 +96,336 @@ public class AST {
     public override string ToString() {
        return this.Eval(new Context()).ToString();
     }
+
+    // type check
+    public virtual Exception Check() {
+        return null;
+    }
 }
 
-public class Literal : AST {
+public class AST<T>: AST {
 
-    public dynamic _val {
-        get;
-        set;
+    public static string STRING = Tokens.STRING;
+    public static string INTEGER = Tokens.INTEGER;
+    public static string FLOAT = Tokens.FLOAT;
+    public static string BOOL = "BOOL";
+    public static string DYNAMIC = "DYNAMIC";
+
+    public static HashSet<string> FloatOp = new HashSet<string>{FLOAT, INTEGER};
+    public static HashSet<string> BoolOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING};
+    public static HashSet<string> StrOp = new HashSet<string>{STRING};
+
+    public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
+        {FLOAT, FloatOp},
+        {BOOL, FloatOp},
+        {STRING, StrOp},
+    };
+
+    public AST(string Type): base(Type) {}
+
+    public static Dictionary<string, Type> Types = new Dictionary<string, Type>{
+        {STRING, typeof(string)},
+        {INTEGER, typeof(int)},
+        {FLOAT, typeof(float)},
+        {BOOL, typeof(bool)},
+        // can't typeof(dynamic)
+        // this also means we don't care about the type (print)
+        {DYNAMIC, typeof(object)}
+    };
+    public static Dictionary<Type, string> RevTypes = new Dictionary<Type, string>{
+        {typeof(string), STRING},
+        {typeof(int), INTEGER},
+        {typeof(float), FLOAT},
+        {typeof(bool), BOOL},
+        {typeof(object), DYNAMIC}
+        // no reverse search for typeof(object)
+    };
+
+    public static string ToStr() {
+        return RevTypes[typeof(T)];
+    }
+    public static string ToStr(Type type) {
+        return RevTypes[type];
+    }
+    public static Type ToType(string str) {
+        return Types[str];
+    }
+
+    public static Type InferType(AST<object> ast) {
+        return Types[ast.Type];
+    }
+}
+
+public abstract class Literal<T>: AST<T> {
+    private T val;
+
+    public Literal(T val, string Type): base(Type){
+        this.val = val;
+    }
+
+    public T Val() {
+        return this.val;
     }
 
     public override dynamic Eval(Context ctx) {
-        return this._val;
+        return this.val;
+    }
+
+    // no need to override check
+}
+
+public class StringLiteral: Literal<string> {
+
+    public StringLiteral(string val): base(val, AST<object>.STRING) {}
+}
+
+public class IntLiteral : Literal<int> {
+
+    public IntLiteral(int val): base(val, AST<object>.INTEGER) {}
+}
+
+public class FloatLiteral : Literal<float> {
+
+    public FloatLiteral(float val): base(val, AST<object>.FLOAT) {}
+}
+
+public class BoolLiteral : Literal<bool> {
+
+    public BoolLiteral(bool val): base(val, BOOL) {}
+}
+
+public class Terms {
+    int start;
+    int end;
+    int index;
+    Func<int, dynamic> term;
+
+    public Terms(List<AST> ls) {
+        this.index = 0;
+        this.start = 0;
+        this.end = ls.Count() - 1;
+        this.term = (int index) => {return ls[index];};
+    }
+
+    public Terms(int start, int end=Int32.MaxValue) {
+        this.index = 0;
+        this.start = start;
+        this.end = end;
+        this.term = (int index) => {return index;};
+    }
+
+    public int? Next() {
+        if (this.index == this.end) {
+            return null;
+        }
+        this.index += 1;
+
+        return this.term(this.index - 1);
     }
 }
 
-public class StringLiteral: Literal {
+// block node... reimagined
+// after we implement type checking add MoveNext to BlockNode
+public class SequenceLiteral : Literal<Terms> {
 
-    public StringLiteral(string val) {
-        this._val = val;
+    public SequenceLiteral(Terms val): base(val, Tokens.SEQUENCE) {}
+
+    public dynamic val {
+        get {
+            // Eval is called recursively and we have to check
+            // wether it is a sequence or not by calling eval
+            // to avoid losing data we give a reference of the isntance when Eval is called
+            return this;
+        }
+    }
+
+    public dynamic GetNext() {
+        return this.val.Next();
     }
 }
 
-public class IntLiteral : Literal {
-
-    public IntLiteral(int val) {
-        this._val = val;
-    }
-}
-
-public class FloatLiteral : Literal {
-
-    public FloatLiteral(float val) {
-        this._val = val;
-    }
-}
-
-public class BoolLiteral : Literal {
-
-    public BoolLiteral(bool val) {
-        this._val = val;
-    }
-}
-
-public class SequenceLiteral : Literal {
-    public SequenceLiteral(string val) {
-        this._val = val;
-    }
-}
-
-public class BinaryOperation: AST {
+// <In, Out>
+public abstract class BinaryOperation<T, R>: AST<R> {
     public AST left;
     public AST right;
 
-    public BinaryOperation(AST left, AST right) {
+    public BinaryOperation(AST left, AST right): base(AST<R>.ToStr(typeof(R))) {
         this.left = left;
         this.right = right;
     }
 
     public override dynamic Eval(Context ctx) {
-        var left = this.left.Eval(ctx);
-        var right = this.right.Eval(ctx);
+        // ValidateArgs -> See Type and check if they are valid before eval
         try {
             return this.Operation(this.left.Eval(ctx), this.right.Eval(ctx));
         }
-        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException e) {
-            string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {left.GetType()} and {right.GetType()}";
-            throw new TypeError(msg);
+        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
+            string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {this.left.GetType()} and {this.right.GetType()}";
+            throw new RuntimeError(msg);
         }
     }
 
-    public virtual dynamic Operation(float a, float b) {
-        throw new Exception("Not implemented");
+    public override Exception Check() {
+        bool dynamic_expr = this.right.Type == AST<object>.DYNAMIC || this.left.Type == AST<object>.DYNAMIC;
+        bool right_type = AST<object>.Compatible[this.Type].Contains(this.left.Type) && AST<object>.Compatible[this.Type].Contains(this.right.Type);
+
+        if (dynamic_expr || right_type) {
+            return null;
+        }
+
+        string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {left.GetType()} and {right.GetType()} (expected {AST<R>.ToStr(typeof(R))})";
+        return new TypeError(msg);
     }
 
-    public virtual dynamic Operation(float a, int b) {
-        return this.Operation(a, (float) b);
-    }
-
-    public virtual dynamic Operation(int a, float b) {
-        return this.Operation((float) a, b);
-    }
-
-    public virtual dynamic Operation(int a, int b) {
-        return this.Operation((float) a, (float) b);
-    }
-
+    public abstract R Operation(T a, T b);
 }
 
-public class Sum : BinaryOperation {
+public class Sum : BinaryOperation<float, float> {
 
     public Sum(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override float Operation(float a, float b) {
         return a + b;
     }
 }
 
-public class Substraction : BinaryOperation {
+public class Substraction : BinaryOperation<float, float> {
 
     public Substraction(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override float Operation(float a, float b) {
         return a + -b;
     }
 }
-public class Division : BinaryOperation {
+public class Division : BinaryOperation<float, float> {
 
     public Division(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override float Operation(float a, float b) {
         return a / b;
     }
 }
-public class Mult : BinaryOperation {
+public class Mult : BinaryOperation<float, float> {
    
     public Mult(AST left, AST right): base(left, right) {}
 
-    public override dynamic Operation(float a, float b) {
+    public override float Operation(float a, float b) {
         return a * b;
     }
 }
-public class Modulo : BinaryOperation {
+public class Modulo : BinaryOperation<float, float> {
    
     public Modulo(AST left, AST right): base(left, right) {}
 
-    public override dynamic Operation(float a, float b) {
+    public override float Operation(float a, float b) {
         return a % b;
     }
 }
-public class Exp : BinaryOperation {
+public class Exp : BinaryOperation<float, float> {
 
     public Exp(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override float Operation(float a, float b) {
         return (float) System.Math.Pow(a, b);
     }
 }
-public class Equals : BinaryOperation {
+public class Equals : BinaryOperation<float, bool> {
 
     public Equals(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override bool Operation(float a, float b) {
         return a == b;
     }
 }
-public class Higher : BinaryOperation {
+public class Higher : BinaryOperation<float, bool> {
 
     public Higher(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override bool Operation(float a, float b) {
         return a > b;
     }
 }
-public class Lower : BinaryOperation {
+public class Lower : BinaryOperation<float, bool> {
 
     public Lower(AST left, AST right): base(left, right) {}
    
-    public override dynamic Operation(float a, float b) {
+    public override bool Operation(float a, float b) {
         return a < b;
     }
 }
 
-public class UnaryOperation : AST {
+//
+public abstract class UnaryOperation<T, R> : AST<R> {
 
     public AST block;
 
-    public UnaryOperation(AST block) {
+    public override string Type {
+        get {
+            return this.block.Type;
+        }
+    }
+
+    public UnaryOperation(AST block): base(AST<R>.ToStr()) {
         this.block = block;
     }
     
     public override dynamic Eval(Context ctx) {
-        return Operation(this.block.Eval(ctx));
+        return this.Operation(this.block.Eval(ctx));
     }
 
-    public virtual dynamic Operation(float a) {
-        throw new Exception("Not implemented");
-    }
+    public abstract R Operation(T a);
 
-    public virtual dynamic Operation(bool a) {
-        throw new Exception("Not implemented");
+    public void Check() {
+        bool dynamic_expr = this.block.Type == AST<object>.DYNAMIC;
+        bool right_type = this.block.Type == AST<R>.ToStr(typeof(R));
+
+        if ((dynamic_expr || right_type)) {
+            return;
+        }
+
+        string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {this.block.Type}";
+        throw new RuntimeError(msg);
     }
 }
 
-public class ChangeSign : UnaryOperation {
+public class ChangeSign : UnaryOperation<float, float> {
 
     public ChangeSign(AST block): base(block) {}
     
-    public override dynamic Operation(float a) {
+    public override float Operation(float a) {
         return -a;
     }
 }
 
-public class Negate : UnaryOperation {
+public class Negate : UnaryOperation<float, bool> {
 
     public Negate(AST block): base(block) {}
-    
-    public override dynamic Operation(float a) {
+
+    // c# gets confused with the dynamic type for some reason
+    public override dynamic Eval(Context ctx) {
+        return this.Operation(this.block.Eval(ctx));
+    }
+
+    public override bool Operation(float a) {
         return this.Operation(Convert.ToBoolean(a));
     }
 
-    public override dynamic Operation(bool a) {
+    public bool Operation(bool a) {
         return !a;
     }
 }
 
-public class VariableDeclaration : AST {
+// these AST's types depend of something so Type is a property
+public class VariableDeclaration: AST {
 
     public string name;
     public AST expression;
+
+    public override string Type {
+        get {
+            return this.expression.Type;
+        }
+    }
 
     public VariableDeclaration(string name, AST expression) {
         this.name = name;
@@ -301,12 +442,27 @@ public class VariableDeclaration : AST {
     }
 }
 
+// this depends of the type of the declaration
 public class Variable : AST {
 
     public string name;
+    // XXX notice this is not VariableDeclaration<dynamic>
+    // we only care about VariableDeclaration.expression so this is what is here
+    public VariableDeclaration declaration;
+
+    public override string Type{
+        get {
+            if (declaration is null) {
+                return AST<object>.DYNAMIC;
+            }
+            return declaration.Type;
+        }
+    }
 
     public Variable(string name) {
         this.name = name;
+        // we don't know beforehand
+        this.declaration = null;
     }
 
     public override dynamic Eval(Context ctx) {
@@ -319,6 +475,8 @@ public class Variable : AST {
     }
 }
 
+// always dynamic; we just don't know
+// that said we can change it (in case of sequences it's a must)
 public class BlockNode: AST {
     // Contains a set of evaluables
     // only the last block is returned to the interpreter
@@ -342,6 +500,16 @@ public class BlockNode: AST {
         return null;
     }
 
+    public override Exception Check() {
+        foreach(AST item in this.blocks) {
+            Exception? exc = item.Check();
+            if (!(exc is null)) {
+                return exc;
+            }
+        }
+        return null;
+    }
+
     public override string ToString() {
         return this.blocks.ToString();
     }
@@ -350,13 +518,20 @@ public class BlockNode: AST {
 public class FunctionDeclaration: AST {
 
     public string name;
+    // we don't konw the types of each argument
     public BlockNode args;
-    public AST block_node;
+    public AST body;
 
-    public FunctionDeclaration(string name, BlockNode args, AST block_node) {
+    public override string Type{
+        get {
+            return this.body.Type;
+        }
+    }
+
+    public FunctionDeclaration(string name, BlockNode args, AST body) {
         this.name = name;
         this.args = args;
-        this.block_node = block_node;
+        this.body = body;
     }
 
     public override dynamic Eval(Context ctx) {
@@ -365,42 +540,58 @@ public class FunctionDeclaration: AST {
     }
 
     public override string ToString() {
-        return $"<(FunctionDeclaration) [name: {this.name}, args: {this.args}, block_node: {this.block_node}]>";
+        return $"<(FunctionDeclaration) [name: {this.name}, args: {this.args}, body: {this.body} type: {this.Type}]>";
      }
 }
 
+// same as with Variable
 public class Function : AST {
     public string name;
     public BlockNode args;
 
+    public FunctionDeclaration declaration;
+
+    public override string Type {
+        get {
+            if (this.declaration is null) {
+                return AST<object>.DYNAMIC;
+            }
+            return this.declaration.Type;
+        }
+    }
+
     public Function(string name, BlockNode args) {
         this.name = name;
         this.args = args;
+
+        this.declaration = null;
     }
 
     public override dynamic Eval(Context ctx) {
         FunctionDeclaration fun_decl = (FunctionDeclaration) ctx[this.name];
         BlockNode fun_args = fun_decl.args;
 
+        // know if we have to infer the type (or if we already inferred it from the declaration)
+        bool is_dynamic = this.Type == AST<object>.DYNAMIC;
+        
         Context fun_ctx = ctx.Clone();
-        Variable arg;
         for (int i = 0; i < fun_args.blocks.Count(); i++) {
-            arg = (Variable) fun_args.blocks[i];
-            try {
-                fun_ctx[arg.name] = this.args.blocks[i].Eval(ctx);
-            }
-            catch (System.ArgumentOutOfRangeException) {
-                throw new RuntimeError($"Too few/many arguments for function {this.name}");
-            }
+            Variable variable = (Variable) fun_args.blocks[i];
+            AST expression = this.args.blocks[i];
+
+            fun_ctx[variable.name] = expression.Eval(ctx);
+            // XXX could call AST.Check() to see if the types match
         }
-        // allow recursivity
+
+        // allow recursivity (explicitly)
         fun_ctx[this.name] = fun_decl;
 
-        return fun_decl.block_node.Eval(fun_ctx);
+        return fun_decl.body.Eval(fun_ctx);
    }
 
+
     public override string ToString() {
-        return $"<(Function) [name: {this.name}, args: {this.args}]>";
+        return $"<(Function) [name: {this.name}, args: {this.args}, type: {this.Type}]>";
     }
 }
 
@@ -408,11 +599,17 @@ public class Lambda : AST {
     // let-in expression
 
     public BlockNode variables;
-    public AST block_statement;
+    public AST body;
 
-    public Lambda(BlockNode variables, AST block_statement) {
+    public override string Type {
+        get {
+            return body.Type;
+        }
+    }
+
+    public Lambda(BlockNode variables, AST body) {
         this.variables = variables;
-        this.block_statement = block_statement;
+        this.body = body;
     }
 
     public override dynamic Eval(Context ctx) {
@@ -423,21 +620,22 @@ public class Lambda : AST {
         // thus, we declare variables inside the scope of the lambda
         this.variables.Eval(local_ctx);
 
-        var res = this.block_statement.Eval(local_ctx);
+        var res = this.body.Eval(local_ctx);
 
         return res;
     }
 }
 
 public class Conditional : AST {
+    // we convert it to bool
     AST hipotesis;
-    BlockNode tesis;
-    BlockNode antithesis;
+    AST tesis;
+    AST antithesis;
 
     public Conditional(
         AST hipotesis,
-        BlockNode tesis,
-        BlockNode antithesis
+        AST tesis,
+        AST antithesis
     ) {
         this.hipotesis = hipotesis;
         this.tesis = tesis;
@@ -454,12 +652,26 @@ public class Conditional : AST {
 }
 
 public class Parser {
+    // FunctionMap -> Dict with declared functions (they are global)
+    // VariableMap -> Dict with global variables <string, List<VariableDeclaration>>
+    //
+    // We can use them to infer the type
     Lexer lexer;
     Token current_token;
 
-    public Parser(Lexer lexer) {
+    // global
+    public Context global_context;
+    public Context local_context;
+
+    public Parser(Lexer lexer, Context context = null) {
         this.lexer = lexer;
         this.current_token = this.lexer.GetNextToken();
+        if (context is null) {
+            this.global_context = this.local_context = new Context();
+        }
+        else {
+            this.global_context = this.local_context = context;
+        }
     }
 
     public void Error(Exception exception) {
@@ -481,6 +693,18 @@ public class Parser {
         else {
             this.Error(new SyntaxError($"Expected {token_type} found {this.current_token.type}."));
         }
+    }
+
+    public AST TypeFor(string name) {
+        if (this.local_context.ContainsKey(name)) {
+            return this.local_context[name];
+        }
+        // XXX builtins
+        return null;
+    }
+
+    public void Add(string ast) {
+        return;
     }
 
     public BlockNode Arguments() {
@@ -505,7 +729,9 @@ public class Parser {
        return new BlockNode(args);
     }
 
-    public AST Namespace(string? name=null) {
+    public AST Namespace(string? name=null, bool local=false) {
+        // XXX could be functiof of one argument
+        // draw "loli"
         if (name is null) {
             name = this.current_token.val;
 
@@ -515,10 +741,14 @@ public class Parser {
         AST node;
         BlockNode args = this.Arguments();
         if (args is not null) {
+            //string Type = this.TypeFor("function");
             node = new Function(name, args);
         }
         else {
-            node = new Variable(name);
+            VariableDeclaration declaration = (VariableDeclaration) this.TypeFor(name);
+            Variable var_node = new Variable(name);
+            node = var_node;
+            var_node.declaration = declaration;
         }
         return node;
     }
@@ -530,13 +760,6 @@ public class Parser {
         this.Eat(Tokens.IN);
 
         return new Lambda(variables, this.Expr());
-    }
-
-    public AST AssignSequence(List<AST> variables) {
-        // change the value of variable declarations from undefined to an item of the sequence
-        
-        // XXX
-        return this.LiteralNode();
     }
 
     public (string, string?) _Declare(List<AST> variables, List<string> names) {
@@ -592,6 +815,9 @@ public class Parser {
         VariableDeclaration variable = new VariableDeclaration(name, val);
         variables.Add(variable);
 
+        // add to context
+        this.local_context[variable.name] = variable;
+
         names.Add(name);
 
         return (name, type);
@@ -632,20 +858,13 @@ public class Parser {
                 }
             }
 
+
             variable = new VariableDeclaration(name, val);
             variables.Add(variable);
-        }
 
-        if (this.current_token.type == Tokens.ASSIGN) {
-            // sequence
-            this.Eat(Tokens.ASSIGN);
-            return new BlockNode(new List<AST>{this.AssignSequence(variables)});
-        }
 
-        VariableDeclaration _variable = (VariableDeclaration) variables[0];
-        if (_variable.expression is null) {
-            // [name];
-            return new BlockNode(new List<AST>{this.Namespace(name)});
+            // add to context
+            this.local_context[variable.name] = variable;
         }
 
         BlockNode multi_decl = new BlockNode(variables);
@@ -687,7 +906,7 @@ public class Parser {
         );
     }
 
-    public Literal LiteralNode() {
+    public AST LiteralNode() {
         Token token = this.current_token;
         if (token.type == Tokens.STRING) {
             this.Eat(Tokens.STRING);
@@ -810,7 +1029,6 @@ public class Parser {
 
             node = (AST) Activator.CreateInstance(ast, args: new Object[] {node, this.Factor()});
         }
-
         return node;
     }
 
@@ -823,8 +1041,6 @@ public class Parser {
         int count_ids = 0;
         int _let = 0;
         int others = 0;
-        int assign = 0;
-        Token _token;
 
         while (token != Tokens.END && token != Tokens.EOF) {
             if (token == Tokens.ID) {
@@ -881,7 +1097,7 @@ public class Parser {
 
     public AST Parse() {
         List<AST> nodes = new List<AST>();
-        AST node;
+        AST node = null;
 
         while (this.current_token.type != Tokens.EOF) {
             node = this._Parse();
@@ -889,16 +1105,32 @@ public class Parser {
             nodes.Add(node);
         }
 
+        if (!(node is null)) {
+            Exception? exc = node.Check();
+            if (!(exc is null)) {
+                this.Error(exc);
+            }
+        }
+
         return new BlockNode(nodes);
     }
 }
 
 // builtins
-class PrintBlockNode : BlockNode {
-    public PrintBlockNode(List<AST> blocks) : base(blocks) {}
+//
+// class [Fn]BlockNode -> evaluable body
+// class [Fn] {
+//     public [Fn] {
+//         "[fn]",
+//         args,
+//         [Fn]BlockNode()
+//     }
+// }
+class PrintBlockNode : UnaryOperation<object, object> {
+    public PrintBlockNode(AST argument) : base(argument) {}
 
-    public override dynamic Eval(Context ctx) {
-        Console.WriteLine(base.Eval(ctx));
+    public override object Operation(object arg) {
+        Console.WriteLine(arg);
         return null;
     }
 }
@@ -908,15 +1140,15 @@ class Print : FunctionDeclaration {
     public Print() : base(
         "print",
         new BlockNode(new List<AST>{new Variable("val")}),
-        new PrintBlockNode(new List<AST>{new Variable("val")})
+        new PrintBlockNode(new Variable("val"))
     ) {}
 }
 
-class CosBlockNode : BlockNode {
-    public CosBlockNode(List<AST> blocks) : base(blocks) {}
+class CosBlockNode : UnaryOperation<float, float> {
+    public CosBlockNode(AST argument) : base(argument) {}
 
-    public override dynamic Eval(Context ctx) {
-        return Math.Cos(base.Eval(ctx));
+    public override float Operation(float arg) {
+        return (float) Math.Cos(arg);
     }
 }
 
@@ -925,15 +1157,15 @@ class Cos : FunctionDeclaration {
     public Cos() : base(
         "cos",
         new BlockNode(new List<AST>{new Variable("val")}),
-        new CosBlockNode(new List<AST>{new Variable("val")})
+        new CosBlockNode(new Variable("val"))
     ) {}
 }
 
-class SinBlockNode : BlockNode {
-    public SinBlockNode(List<AST> blocks) : base(blocks) {}
+class SinBlockNode : UnaryOperation<float, float> {
+    public SinBlockNode(AST argument) : base(argument) {}
 
-    public override dynamic Eval(Context ctx) {
-        return Math.Sin(base.Eval(ctx));
+    public override float Operation(float arg) {
+        return (float) Math.Sin(arg);
     }
 }
 
@@ -942,15 +1174,15 @@ class Sin : FunctionDeclaration {
     public Sin() : base(
         "sin",
         new BlockNode(new List<AST>{new Variable("val")}),
-        new SinBlockNode(new List<AST>{new Variable("val")})
+        new SinBlockNode(new Variable("val"))
     ) {}
 }
 
-class LogBlockNode : BlockNode {
-    public LogBlockNode(List<AST> blocks) : base(blocks) {}
+class LogBlockNode : UnaryOperation<float, float> {
+    public LogBlockNode(AST argument) : base(argument) {}
 
-    public override dynamic Eval(Context ctx) {
-        return Math.Log(base.Eval(ctx));
+    public override float Operation(float arg) {
+        return (float) Math.Log(arg);
     }
 }
 
@@ -959,7 +1191,7 @@ class Log : FunctionDeclaration {
     public Log() : base(
         "log",
         new BlockNode(new List<AST>{new Variable("val")}),
-        new LogBlockNode(new List<AST>{new Variable("val")})
+        new LogBlockNode(new Variable("val"))
     ) {}
 }
 
@@ -989,6 +1221,7 @@ public class Interpreter {
     public Interpreter(Parser parser) {
         this.parser = parser;
         this._tree = null;
+
         BUILTINS.Eval(this.GLOBAL_SCOPE);
     }
 
