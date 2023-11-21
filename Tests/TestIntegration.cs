@@ -160,4 +160,47 @@ public class TestIntegration
         var result = this._Interpret("five() = 5;five p1;p1;");
         Assert.Equal(5, result);
     }
+
+    [Fact]
+    public void TestInvalidLetin() {
+        // [function] [name] == [function] = [type]();
+        Assert.Throws<NameError>(
+                delegate {
+                this._Interpret(
+                        "let a = (let b = 4 + a in b) in a;"
+                );}
+       );
+    }
+
+    [Fact]
+    public void TestSequenceBasic() {
+        // [function] [name] == [function] = [type]();
+        var result = this._Interpret("{1,2,3};");
+        // to string
+        // this is a sequence literal
+        Assert.Equal("{1, 2, 3, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestSequence() {
+        // [function] [name] == [function] = [type]();
+        var result = this._Interpret("a = {1,2,3};a;");
+        // to string
+        // this is a sequence literal
+        Assert.Equal("{1, 2, 3, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestSequenceComplex() {
+        // [function] [name] == [function] = [type]();
+        var result = this._Interpret("a, rest = {1,2,3};a;");
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void TestSequenceWithRest() {
+        // [function] [name] == [function] = [type]();
+        var result = this._Interpret("a, rest = {1,2,3};rest;");
+        Assert.Equal("{2, 3, }", result.ToString());
+    }
 }

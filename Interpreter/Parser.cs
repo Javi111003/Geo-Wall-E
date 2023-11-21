@@ -110,10 +110,12 @@ public class AST<T>: AST {
     public static string FLOAT = Tokens.FLOAT;
     public static string BOOL = "BOOL";
     public static string DYNAMIC = "DYNAMIC";
+    public static string SEQUENCE = "SEQUENCE";
 
     public static HashSet<string> FloatOp = new HashSet<string>{FLOAT, INTEGER};
     public static HashSet<string> BoolOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING};
     public static HashSet<string> StrOp = new HashSet<string>{STRING};
+    public static HashSet<string> SeqOp = new HashSet<string>{SEQUENCE};
 
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
         {FLOAT, FloatOp},
@@ -131,6 +133,7 @@ public class AST<T>: AST {
         // can't typeof(dynamic)
         // this also means we don't care about the type (print)
         {DYNAMIC, typeof(object)}
+        // not for SEQUENCE
     };
     public static Dictionary<Type, string> RevTypes = new Dictionary<Type, string>{
         {typeof(string), STRING},
@@ -157,7 +160,7 @@ public class AST<T>: AST {
 }
 
 public abstract class Literal<T>: AST<T> {
-    private T val;
+    protected T val;
 
     public Literal(T val, string Type): base(Type){
         this.val = val;
@@ -191,56 +194,129 @@ public class FloatLiteral : Literal<float> {
 
 public class BoolLiteral : Literal<bool> {
 
-    public BoolLiteral(bool val): base(val, BOOL) {}
+    public BoolLiteral(bool val): base(val, AST<object>.BOOL) {}
 }
 
-public class Terms {
+// an IEnumerator but not an IEnumerator
+public class Terms: AST {
     int start;
     int end;
     int index;
+    protected List<AST> ls;
+    // we don't know looking at the fields
+    // this is used to sum sequences
+    public bool IsInfinite;
     Func<int, dynamic> term;
 
-    public Terms(List<AST> ls) {
-        this.index = 0;
-        this.start = 0;
-        this.end = ls.Count() - 1;
-        this.term = (int index) => {return ls[index];};
-    }
+    // lambda copy for the class
+    // we have to ways to define the class
+    // (we could separate the classes in Terms and Terms<int>) but it's "three strikes and you are out"
+    // not two
+    Func<Terms> copy;
 
-    public Terms(int start, int end=Int32.MaxValue) {
-        this.index = 0;
-        this.start = start;
-        this.end = end;
-        this.term = (int index) => {return index;};
-    }
-
-    public int? Next() {
-        if (this.index == this.end) {
-            return null;
+    public override string Type {
+        get {
+            if (this.start == this.end) {
+                return AST<object>.INTEGER;
+            }
+            return this.term(0).Type;
         }
-        this.index += 1;
-
-        return this.term(this.index - 1);
     }
+
+    public Terms(List<AST> ls) {
+        this.index = -1;
+        this.start = 0;
+        this.end = ls.Count();
+        this.ls = ls;
+        this.term = (int i) => {return ls[i];};
+        this.IsInfinite = false;
+
+        // know which one to call
+        this.copy = () => new Terms(ls);
+    }
+
+    public Terms(int start, int? end): base(AST<int>.ToStr()) {
+        this.index = start - 1;
+        this.start = start;
+        if (end is null) {
+            this.end = Int32.MaxValue;
+            this.IsInfinite = true;
+        }
+        else {
+            this.end = (int) end;
+            this.IsInfinite = false;
+        }
+        this.term = (int index) => {return new IntLiteral(index);};
+
+        this.copy = () => new Terms(start, end);
+
+        this.ls = null;
+    }
+
+    public Terms Clone() {
+        return this.copy();
+    }
+
+    public override dynamic Eval(Context ctx) {
+        if (this.MoveNext()) {
+            return this.Current.Eval(ctx);
+        }
+        return null;
+    }
+
+    public bool MoveNext() {
+        index += 1;
+        // do not include range end [start, end)
+        if (this.index >= end) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public AST Current {
+        get {
+            return this.term(this.index);
+        }
+    }
+
+    public IEnumerator<AST> GetEnumerator() {
+        for (int i = this.index + 1; i < this.end; i++) {
+            yield return this.term(i);
+        }
+    }
+
+    public override string ToString() {
+        StringBuilder str = new StringBuilder("{");
+        if (!this.IsInfinite) {
+            foreach(AST item in this) {
+                str.Append(item.ToString() + ", ");
+            }
+        }
+        else {
+            str.Append($"{this.start}...");
+        }
+        str.Append("}");
+        return str.ToString();
+    }
+
 }
 
 // block node... reimagined
-// after we implement type checking add MoveNext to BlockNode
 public class SequenceLiteral : Literal<Terms> {
 
-    public SequenceLiteral(Terms val): base(val, Tokens.SEQUENCE) {}
+    public SequenceLiteral(Terms val): base(val, AST<object>.SEQUENCE) {}
 
-    public dynamic val {
-        get {
-            // Eval is called recursively and we have to check
-            // wether it is a sequence or not by calling eval
-            // to avoid losing data we give a reference of the isntance when Eval is called
-            return this;
-        }
+    public SequenceLiteral Clone() {
+        return new SequenceLiteral(this.val.Clone());
     }
 
-    public dynamic GetNext() {
-        return this.val.Next();
+    public override dynamic Eval(Context ctx) {
+        return this;
+    }
+
+    public override string ToString() {
+        return this.val.ToString();
     }
 }
 
@@ -438,6 +514,9 @@ public class VariableDeclaration: AST {
     }
 
     public override string ToString() {
+        if (this.expression is null) {
+            return "<(Variable) [name: " + this.name + ", value: undefined]>";
+        }
         return "<(Variable) [name: " + this.name + ", value: " + this.expression.ToString() + "]>";
     }
 }
@@ -577,14 +656,17 @@ public class Function : AST {
         Context fun_ctx = ctx.Clone();
         for (int i = 0; i < fun_args.blocks.Count(); i++) {
             Variable variable = (Variable) fun_args.blocks[i];
-            AST expression = this.args.blocks[i];
-
-            fun_ctx[variable.name] = expression.Eval(ctx);
-            // XXX could call AST.Check() to see if the types match
+            try {
+                AST expression = this.args.blocks[i];
+                fun_ctx[variable.name] = expression.Eval(ctx);
+            }
+            catch (Exception) {
+                throw new RuntimeError($"Too many/few arguments for {this.name}");
+            }
         }
 
         // allow recursivity (explicitly)
-        fun_ctx[this.name] = fun_decl;
+        //fun_ctx[this.name] = fun_decl;
 
         return fun_decl.body.Eval(fun_ctx);
    }
@@ -741,7 +823,6 @@ public class Parser {
         AST node;
         BlockNode args = this.Arguments();
         if (args is not null) {
-            //string Type = this.TypeFor("function");
             node = new Function(name, args);
         }
         else {
@@ -762,12 +843,14 @@ public class Parser {
         return new Lambda(variables, this.Expr());
     }
 
-    public (string, string?) _Declare(List<AST> variables, List<string> names) {
+    private (string, string?) DeclareFirst(List<AST> variables, List<string> names) {
         // helper function to declare a variable
         // the first time it can have a type before the name 
         // so it's an special case
         //
         // we modify "variables" and "names"
+        //
+        // FIXME fix this shite
 
         string name = this.current_token.val;
 
@@ -775,7 +858,7 @@ public class Parser {
         // check sequence
         SequenceLiteral seq = null;
         string type = null;
-        if (this.current_token.type == Tokens.SEQUENCE) {
+        if (this.current_token.type == Tokens.SEQUENCE_START) {
             seq = (SequenceLiteral) this.LiteralNode();
             // the first string is the type
             type = name;
@@ -797,13 +880,13 @@ public class Parser {
             return (name, null);
         }
 
-        AST val;
+        AST val = null;
         if (this.current_token.type == Tokens.ASSIGN) {
             // asignation
             this.Eat(Tokens.ASSIGN);
             val = this.Expr();
         }
-        else {
+        else if (type is not null) {
             // declaration
             // [type] {args} [name]; is translated to name = type(args)
             // where type is a function
@@ -827,7 +910,7 @@ public class Parser {
         List<string> names = new List<string>();
         List<AST> variables = new List<AST>();
 
-        (string name, string type) = this._Declare(variables, names);
+        (string name, string type) = this.DeclareFirst(variables, names);
         if (this.current_token.type == Tokens.LPAREN) {
             // function
             return new BlockNode(new List<AST>{this.FunctionDecl(name)});
@@ -835,12 +918,12 @@ public class Parser {
         VariableDeclaration variable;
 
 
+        AST val = null;
         while (this.current_token.type == Tokens.COMMA) {
             this.Eat(Tokens.COMMA);
             name = this.current_token.val;
             names.Add(name);
 
-            AST val;
             this.Eat(Tokens.ID);
 
             if (this.current_token.type == Tokens.ASSIGN) {
@@ -865,6 +948,34 @@ public class Parser {
 
             // add to context
             this.local_context[variable.name] = variable;
+        }
+
+        // sequence declaration
+        // this doesn't modify the original seq
+        // NOTE we already evaluated the first element so if there is not a second
+        // one we can't do this; hence the null check
+        // don't worry about the first one not being taken into account--the list with
+        // all variables is passed to the function handling the special case (DeclareFirst)
+        if (!(val is null) && (val.Type == AST<object>.SEQUENCE)) {
+            SequenceLiteral seq = (SequenceLiteral) val;
+            var sequence = seq.Clone();
+
+            int counter = 0;
+            // we pass the reference to all the variables so when they are evaluated
+            // we modify the index @ Sequence.val and give a different value each time
+            Terms term = sequence.Val();
+            foreach(VariableDeclaration item in variables) {
+                if (counter == (variables.Count() - 1)) {
+                    // minus the last one
+                    // pass a reference to the cloned sequence to the last var
+                    Console.WriteLine(item.name);
+                    item.expression = sequence;
+                    break;
+                }
+                // reference to the term that will return a literal when evaluated
+                item.expression = term;
+                counter += 1;
+            }
         }
 
         BlockNode multi_decl = new BlockNode(variables);
@@ -906,6 +1017,70 @@ public class Parser {
         );
     }
 
+    public AST GetSequence() {        
+        if (this.current_token.type == Tokens.SEQUENCE_END) {
+            this.Eat(Tokens.SEQUENCE_END);
+            // terms start == end => always undefined
+            return new SequenceLiteral(new Terms(0, 0));
+        }
+        AST first = this.Expr();
+        AST last = first;
+        string Type = first.Type;
+        List<AST> items = new List<AST>{first};
+
+        while (this.current_token.type != Tokens.SEQUENCE_END && this.current_token.type != Tokens.EOF && this.current_token.type != Tokens.DOT) {
+            // finite
+            this.Eat(Tokens.COMMA);
+            AST item = this.Expr();
+            if (item.Type != Type || item.Type == "DYNAMIC" || first.Type == "DYNAMIC") {
+                this.Error(
+                    new TypeError(
+                        $"Inconsistent types of elements for secuence. Expected {Type} found {item.Type}"
+                    )
+                );
+            }
+            items.Add(item);
+        }
+
+        // exited the loop because there were no COMMAs
+        // infinite
+        if (this.current_token.type == Tokens.DOT) {
+            if (first != last) {
+                this.Error(new SyntaxError("Too many starting points for sequence. Expected one element (found many)"));
+            }
+            if (Type != AST<object>.INTEGER) {
+                this.Error(new TypeError($"Can not make an infinite sequence of {Type} (try using integers)"));
+            }
+            // first == last
+            this.Eat(Tokens.DOT);
+            this.Eat(Tokens.DOT);
+            this.Eat(Tokens.DOT);
+
+            if (this.current_token.type == Tokens.SEQUENCE_END) {
+                last = null;
+            }
+            else {
+                if (this.current_token.type != Tokens.INTEGER) {
+                    this.Error(new TypeError($"Range end must be an integer. Found {this.current_token.type}"));
+                }
+                last = this.LiteralNode();
+            }
+
+            Terms term_fin = new Terms(first.Eval(null), last.Eval(null));
+
+            return new SequenceLiteral(term_fin);
+        }
+
+        // finite 
+        // we have the items at "items"
+
+        Terms term = new Terms(items);
+
+        this.Eat(Tokens.SEQUENCE_END);
+
+        return new SequenceLiteral(term);
+    }
+
     public AST LiteralNode() {
         Token token = this.current_token;
         if (token.type == Tokens.STRING) {
@@ -919,6 +1094,10 @@ public class Parser {
         else if (token.type == Tokens.FLOAT) {
             this.Eat(Tokens.FLOAT);
             return new FloatLiteral((float) Math.Round(Convert.ToSingle(token.val), 4));
+        }
+        else if (token.type == Tokens.SEQUENCE_START) {
+            this.Eat(Tokens.SEQUENCE_START);
+            return this.GetSequence();
         }
 
         // else
