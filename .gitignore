@@ -9,4 +9,7 @@
 *.aux
 *.log
 *.toc
+#vs
+**/.vs/*
+*.sln
 
