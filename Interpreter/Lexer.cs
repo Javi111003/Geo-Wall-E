@@ -77,7 +77,7 @@ public class Token {
     public int line;
     public int column;
 
-    public Token(string type_, int _line, int _column ,string val = "") {
+    public Token(string type_, int _line=0, int _column=0 ,string val = "") {
         this.type = type_;
         this.line = _line;
         this.column = _column;
@@ -123,14 +123,14 @@ public class Lexer {
         Tokens.EXP,
     };
     public static Dictionary<string, Token> RESERVED_KEYWORDS = new Dictionary<string, Token>{
-        {"restore", new Token(Tokens.RESTORE,0,0)},
-        {"draw", new Token(Tokens.DRAW,0,0)},
-        {"undefined", new Token(Tokens.UNDEFINED,0, 0)},
-        {"if", new Token(Tokens.IF, 0, 0)},
-        {"else", new Token(Tokens.ELSE,0, 0)},
-        {"then", new Token(Tokens.THEN, 0, 0)},
-        {"let", new Token(Tokens.LET, 0, 0)},
-        {"in", new Token(Tokens.IN, 0, 0)},
+        {"restore", new Token(Tokens.RESTORE)},
+        {"draw", new Token(Tokens.DRAW)},//construir estos tokens
+        {"undefined", new Token(Tokens.UNDEFINED)},
+        {"if", new Token(Tokens.IF)},
+        {"else", new Token(Tokens.ELSE)},
+        {"then", new Token(Tokens.THEN)},
+        {"let", new Token(Tokens.LET)},
+        {"in", new Token(Tokens.IN)},
     };
 
     public Lexer(string text) {
@@ -308,7 +308,10 @@ public class Lexer {
 
             if (token_repr == "//")//Es un comentario por tanto se ignora el resto de la línea
             {
-                while (current_char != "\n") { this.Advance(); }
+                while (current_char != "\n") 
+                { this.Advance();
+                    return GetNextToken();
+                }
             }
 
             // special handling for composite tokens

@@ -450,7 +450,7 @@ public class Parser {
     }
     public void MoveBack(int steps = 1)//regresar al token anterior o a los anteriores si no matchea lo que esperabamos 
     {
-        this.idx = -steps;
+        this.idx -= steps;
         this.current_token = tokens[idx];
     }
     public void Error(Exception exception) {
