@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Xml.Serialization;
 
 namespace Interpreter;
 
@@ -22,6 +23,7 @@ public static class Tokens {
     public static string  MINUS = "-";
     public static string MULT = "*";
     public static string DIV = "/";
+    public static string COMMENT = "//";
     public static string MODULO = "%";
     public static string EXP = "^";
     public static string LPAREN = "(";
@@ -30,19 +32,24 @@ public static class Tokens {
     public static string EQUALS = "==";
     public static string LOWER = "<";
     public static string ASSIGN = "=";
-    public static string FINLINE = "=>";
     public static string DOT = ".";
     public static string END = ";";
     public static string EOF = "";
-    public static string VAR = "var";
-    public static string LET = "let";
-    public static string IN = "in";
-    public static string IF = "if";
+    public static string DRAW = "draw";
+    public static string  RESTORE = "restore";
+    public static string  UNDEFINED = "undefined";
+    public static string  THEN = "then";
     public static string  ELSE = "else";
-    public static string  FUNCTION = "function";
+    public static string  IF = "if";
+    public static string  LET = "let";
+    public static string  IN = "in";
     public static string QUOTATION = "\"";
     public static string  COMMA = ",";
     public static string  NOT = "!";
+    public static string SEQUENCE_END = "}";
+    public static string SEQUENCE_START = "{";
+    public static string UNDERSCORE = "_";
+
 
     public static string FromValue(string token1, string token2) {
         FieldInfo[] fields = typeof(Tokens).GetFields();
@@ -67,9 +74,13 @@ public static class Tokens {
 public class Token {
     public string type;
     public string val;
+    public int line;
+    public int column;
 
-    public Token(string type_, string val = "") {
+    public Token(string type_, int _line, int _column ,string val = "") {
         this.type = type_;
+        this.line = _line;
+        this.column = _column;
         if (val == "") {
             this.val = this.type;
         }
@@ -112,12 +123,14 @@ public class Lexer {
         Tokens.EXP,
     };
     public static Dictionary<string, Token> RESERVED_KEYWORDS = new Dictionary<string, Token>{
-        {"in", new Token(Tokens.IN)},
-        {"let", new Token(Tokens.LET)},
-        {"var", new Token(Tokens.VAR)},
-        {"function", new Token(Tokens.FUNCTION)},
-        {"if", new Token(Tokens.IF)},
-        {"else", new Token(Tokens.ELSE)}
+        {"restore", new Token(Tokens.RESTORE,0,0)},
+        {"draw", new Token(Tokens.DRAW,0,0)},
+        {"undefined", new Token(Tokens.UNDEFINED,0, 0)},
+        {"if", new Token(Tokens.IF, 0, 0)},
+        {"else", new Token(Tokens.ELSE,0, 0)},
+        {"then", new Token(Tokens.THEN, 0, 0)},
+        {"let", new Token(Tokens.LET, 0, 0)},
+        {"in", new Token(Tokens.IN, 0, 0)},
     };
 
     public Lexer(string text) {
@@ -175,7 +188,7 @@ public class Lexer {
         return Regex.Match(s, pattern).Success;
     }
 
-    // 
+    
 
     public string GetResult(string condition) {
         StringBuilder result = new StringBuilder();
@@ -227,9 +240,9 @@ public class Lexer {
         if (this.current_char == "." && IsDigit(this.Peek())) {
             this.Advance();
             string mantisa = this.GetResult("digit");
-            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString());
+            return new Token(Tokens.FLOAT, this.line, this.column, integer.ToString() + "." + mantisa.ToString());
         }
-        return new Token(Tokens.INTEGER, integer);
+        return new Token(Tokens.INTEGER, this.line, this.column, integer);
 
     }
 
@@ -245,7 +258,7 @@ public class Lexer {
         // pass final '"'
         this.Advance();
 
-        return new Token(Tokens.STRING, result);
+        return new Token(Tokens.STRING, this.line, this.column, result);
     }
 
     public Token Id() {
@@ -258,7 +271,7 @@ public class Lexer {
             token = RESERVED_KEYWORDS[result];
         }
         else {
-            token = new Token(Tokens.ID, result);
+            token = new Token(Tokens.ID, this.line, this.column, result);
         }
 
         return token;
@@ -293,13 +306,27 @@ public class Lexer {
                 this.Error(new LexingError("Invalid character"));
             }
 
+            if (token_repr == "//")//Es un comentario por tanto se ignora el resto de la línea
+            {
+                while (current_char != "\n") { this.Advance(); }
+            }
+
             // special handling for composite tokens
             for (int i = 0; i < token_repr.Length; i++) {
                 this.Advance();
             }
-
-            return new Token(token_repr);
+          
+            return new Token(token_repr,0,0);
         }
-        return new Token(Tokens.EOF);
+        return new Token(Tokens.EOF,this.line, this.column);
+    }
+    public Token[] GetAllTokens()//Por si implementamos lo del move back sobre el array de tokens
+    {
+        List<Token>tokens = new List<Token>();
+        while (GetNextToken().type != Tokens.EOF)
+        {
+            tokens.Add(GetNextToken());
+        }
+        return tokens.ToArray();
     }
 }

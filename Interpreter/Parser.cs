@@ -434,17 +434,30 @@ public class Conditional : AST {
 public class Parser {
     Lexer lexer;
     Token current_token;
+    Token[] tokens;
+    int idx;
 
     public Parser(Lexer lexer) {
+        idx = -1;
         this.lexer = lexer;
-        this.current_token = this.lexer.GetNextToken();
+        this.tokens = this.lexer.GetAllTokens();//obtener el array de tokens desde la entrada 
+        this.current_token = GetNextToken();
     }
-
+    public Token GetNextToken()//Obtener los token uno a uno por rl puntero sobre el array de tokens 
+    {
+        this.idx += 1;
+        return this.tokens[idx];
+    }
+    public void MoveBack(int steps = 1)//regresar al token anterior o a los anteriores si no matchea lo que esperabamos 
+    {
+        this.idx = -steps;
+        this.current_token = tokens[idx];
+    }
     public void Error(Exception exception) {
-        Console.WriteLine($"Error parsing line {this.lexer.line} col {this.lexer.column}");
+        Console.WriteLine($"Error parsing line {this.current_token.line} col {this.current_token.column}");//ya la linea y la columna es inherente al token
         // XXX write last line
         Console.WriteLine(this.lexer.text);
-        for (int i = 0; i < this.lexer.column - 2; i++) {
+        for (int i = 0; i < this.current_token.column - 2; i++) {
             Console.Write(" "); 
         }
         Console.Write("^");
@@ -454,7 +467,7 @@ public class Parser {
 
     public void Eat(string token_type) {
         if (this.current_token.type == token_type) {
-            this.current_token = this.lexer.GetNextToken();
+            this.current_token = GetNextToken();
         }
         else {
             this.Error(new UnexpectedToken($"Expected {token_type} found {this.current_token.type}."));
@@ -546,7 +559,6 @@ public class Parser {
     }
 
     public AST FunctionDecl() {
-        this.Eat(Tokens.FUNCTION);
         string name = this.current_token.val;
         this.Eat(Tokens.ID);
         BlockNode args = this.Arguments();
@@ -713,7 +725,7 @@ public class Parser {
         if (this.current_token.type == Tokens.VAR) {
             node = this.Declaration();
         }
-        else if (this.current_token.type == Tokens.FUNCTION) {
+        else if (this.current_token.type == Tokens.ID) {
             node = this.FunctionDecl();
         }
         else {
