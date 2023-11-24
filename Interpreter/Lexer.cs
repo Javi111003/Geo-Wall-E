@@ -49,6 +49,7 @@ public static class Tokens {
     public static string SEQUENCE_END = "}";
     public static string SEQUENCE_START = "{";
     public static string UNDERSCORE = "_";
+    public static string EOL = "\n";
 
 
     public static string FromValue(string token1, string token2) {
@@ -77,7 +78,7 @@ public class Token {
     public int line;
     public int column;
 
-    public Token(string type_, int _line=0, int _column=0 ,string val = "") {
+    public Token(string type_ ,string val = "" ,int _line = 0, int _column = 0) {
         this.type = type_;
         this.line = _line;
         this.column = _column;
@@ -240,9 +241,9 @@ public class Lexer {
         if (this.current_char == "." && IsDigit(this.Peek())) {
             this.Advance();
             string mantisa = this.GetResult("digit");
-            return new Token(Tokens.FLOAT, this.line, this.column, integer.ToString() + "." + mantisa.ToString());
+            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString() ,this.line, this.column);
         }
-        return new Token(Tokens.INTEGER, this.line, this.column, integer);
+        return new Token(Tokens.INTEGER, integer, this.line, this.column);
 
     }
 
@@ -258,7 +259,7 @@ public class Lexer {
         // pass final '"'
         this.Advance();
 
-        return new Token(Tokens.STRING, this.line, this.column, result);
+        return new Token(Tokens.STRING, result ,this.line, this.column);
     }
 
     public Token Id() {
@@ -271,7 +272,7 @@ public class Lexer {
             token = RESERVED_KEYWORDS[result];
         }
         else {
-            token = new Token(Tokens.ID, this.line, this.column, result);
+            token = new Token(Tokens.ID, result, this.line, this.column);
         }
 
         return token;
@@ -319,9 +320,9 @@ public class Lexer {
                 this.Advance();
             }
           
-            return new Token(token_repr,0,0);
+            return new Token(token_repr,"",0,0);
         }
-        return new Token(Tokens.EOF,this.line, this.column);
+        return new Token(Tokens.EOF,"",this.line, this.column);
     }
     public Token[] GetAllTokens()//Por si implementamos lo del move back sobre el array de tokens
     {
