@@ -42,14 +42,6 @@ public static class BestGuess {
     public static int Declaration = 2;
 }
 
-public static class OOPTools {
-    public static bool HasAttribute(this object objectToCheck, string methodName) {
-        var type = objectToCheck.GetType();
-        return type.GetMethod(methodName) != null;
-    } 
-}
-
-
 public class Context : Dictionary<string, dynamic> {
 
     public dynamic this[string key] {
@@ -336,7 +328,7 @@ public abstract class BinaryOperation<T, R>: AST<R> {
             return this.Operation(this.left.Eval(ctx), this.right.Eval(ctx));
         }
         catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
-            string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {this.left.GetType()} and {this.right.GetType()}";
+            string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {this.left.Type} and {this.right.Type}";
             throw new RuntimeError(msg);
         }
     }
@@ -621,6 +613,11 @@ public class FunctionDeclaration: AST {
     public override string ToString() {
         return $"<(FunctionDeclaration) [name: {this.name}, args: {this.args}, body: {this.body} type: {this.Type}]>";
      }
+
+
+    public override Exception Check() {
+        return this.body.Check();
+    }
 }
 
 // same as with Variable
@@ -675,6 +672,10 @@ public class Function : AST {
     public override string ToString() {
         return $"<(Function) [name: {this.name}, args: {this.args}, type: {this.Type}]>";
     }
+
+    // TODO we can pass parameters to check or do something to check the declaration
+    // based on the variables passed
+    // public override Exception Check() {
 }
 
 public class Lambda : AST {
@@ -706,6 +707,11 @@ public class Lambda : AST {
 
         return res;
     }
+
+
+    public override Exception Check() {
+        return this.body.Check();
+    }
 }
 
 public class Conditional : AST {
@@ -730,7 +736,12 @@ public class Conditional : AST {
             return this.tesis.Eval(ctx);
         }
         return this.antithesis.Eval(ctx);
-    } 
+    }
+
+    public override Exception Check() {
+        // TODO tesis and antithesis have the same type (or dynamic etc etc)
+        return null;
+    }
 }
 
 public class Parser {
@@ -741,13 +752,20 @@ public class Parser {
     Lexer lexer;
     Token current_token;
 
+    Token[] tokens;
+    int index;
+
     // global
     public Context global_context;
     public Context local_context;
 
     public Parser(Lexer lexer, Context context = null) {
+        this.index = 0;
         this.lexer = lexer;
-        this.current_token = this.lexer.GetNextToken();
+        this.tokens = this.lexer.GetAllTokens();
+
+        this.current_token = this.GetNextToken();
+
         if (context is null) {
             this.global_context = this.local_context = new Context();
         }
@@ -756,11 +774,30 @@ public class Parser {
         }
     }
 
+    public Token GetNextToken() {
+        return this.tokens[this.index++];
+    }
+
+    public void MoveBack(int steps = 1) {
+        //regresar al token anterior o a los anteriores si no matchea lo que esperabamos 
+
+        this.index -= steps;
+        this.current_token = this.tokens[index];
+   }
+
+   public Token Peek(int steps = 1) {
+       if (this.index < 0 || (this.index > this.tokens.Length)) {
+           // return EOF so it doesn't match anything (except, maybe ending whatever loop is using peek)
+           return new Token(Tokens.EOF);
+       }
+       return this.tokens[this.index + steps];
+   }
+
     public void Error(Exception exception) {
-        Console.WriteLine($"Error parsing line {this.lexer.line} col {this.lexer.column}");
+        Console.WriteLine($"Error parsing line {this.lexer.line} col {this.current_token.column}");
         // XXX write last line
         Console.WriteLine(this.lexer.text);
-        for (int i = 0; i < this.lexer.column - 2; i++) {
+        for (int i = 0; i < this.current_token.column - 2; i++) {
             Console.Write(" "); 
         }
         Console.Write("^");
@@ -770,7 +807,7 @@ public class Parser {
 
     public void Eat(string token_type) {
         if (this.current_token.type == token_type) {
-            this.current_token = this.lexer.GetNextToken();
+            this.current_token = this.GetNextToken();
         }
         else {
             this.Error(new SyntaxError($"Expected {token_type} found {this.current_token.type}."));
@@ -835,12 +872,23 @@ public class Parser {
     }
 
     public Lambda Letin() {
-        // meme lambda-like aberration with bizarre use-cases
+        // meme lambda-like aberration with bizarre use-cases (forma enervante)
         this.Eat(Tokens.LET);
-        BlockNode variables = this.Declaration();
+        var nodes = new List<AST>();
+        // we want a separate context for local vars in the lambda
+        this.local_context = this.global_context.Clone();
+        while (this.current_token.type != Tokens.IN) {
+            nodes.Add(this.ParseNode());
+            this.Eat(Tokens.END);
+        }
         this.Eat(Tokens.IN);
 
-        return new Lambda(variables, this.Expr());
+        var node = new Lambda(new BlockNode(nodes), this.Expr());
+
+        // restore old context
+        this.local_context = this.global_context;
+
+        return node;
     }
 
     private (string, string?) DeclareFirst(List<AST> variables, List<string> names) {
@@ -968,7 +1016,6 @@ public class Parser {
                 if (counter == (variables.Count() - 1)) {
                     // minus the last one
                     // pass a reference to the cloned sequence to the last var
-                    Console.WriteLine(item.name);
                     item.expression = sequence;
                     break;
                 }
@@ -1000,9 +1047,9 @@ public class Parser {
     public Conditional ConditionalStmt() {
         this.Eat(Tokens.IF);
 
-        this.Eat(Tokens.LPAREN);
         AST hipotesis = this.Expr();
-        this.Eat(Tokens.RPAREN);
+
+        this.Eat(Tokens.THEN);
 
         AST tesis = this.Expr();
 
@@ -1220,6 +1267,7 @@ public class Parser {
         int count_ids = 0;
         int _let = 0;
         int others = 0;
+        int counter = 0;
 
         while (token != Tokens.END && token != Tokens.EOF) {
             if (token == Tokens.ID) {
@@ -1240,7 +1288,7 @@ public class Parser {
                 others += 1;
             }
 
-            token = this.lexer.GetNextToken().type;
+            token = this.Peek(counter++).type;
         }
 
         if (count_ids == 2 && others == 0) {
@@ -1249,16 +1297,10 @@ public class Parser {
         return BestGuess.Expression;
     }
 
-    public AST _Parse() {
+    private AST ParseNode() {
         AST node = null;
 
-        this.lexer.Save();
-        var token = this.current_token;
-        int guessed = this.Guess();
-
-        // restore state
-        this.lexer.Load();
-        this.current_token = token;
+        int guessed = Guess();
 
         if (guessed == BestGuess.Expression) {
             node = this.Expr();
@@ -1271,6 +1313,13 @@ public class Parser {
             this.Error(new SyntaxError("Expected ';'"));
         }
 
+        if (!(node is null)) {
+            Exception? exc = node.Check();
+            if (!(exc is null)) {
+                this.Error(exc);
+            }
+        }
+
         return node;
     }
 
@@ -1279,16 +1328,9 @@ public class Parser {
         AST node = null;
 
         while (this.current_token.type != Tokens.EOF) {
-            node = this._Parse();
+            node = this.ParseNode();
             this.Eat(Tokens.END);
             nodes.Add(node);
-        }
-
-        if (!(node is null)) {
-            Exception? exc = node.Check();
-            if (!(exc is null)) {
-                this.Error(exc);
-            }
         }
 
         return new BlockNode(nodes);

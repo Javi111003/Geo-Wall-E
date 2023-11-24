@@ -1,11 +1,19 @@
 using System;
+using System.IO;
+using System.Reflection;
+
 using Xunit;
+
 using Interpreter;
 
 namespace Tests;
 
 public class TestIntegration
 {
+    static public DirectoryInfo BASE_DIR = new DirectoryInfo(
+        Assembly.GetAssembly(typeof (TestIntegration)).Location
+    ).Parent.Parent.Parent.Parent;
+
     public Interpreter.Interpreter _Prepare(string text) {
         Lexer lexer = new Lexer(text);
         Parser parser = new Parser(lexer);
@@ -94,7 +102,7 @@ public class TestIntegration
 
     [Fact]
     public void TestLambda() {
-        var result = this._Interpret("7 + (let x = 2 in x * x);");
+        var result = this._Interpret("7 + (let x = 2; in x * x);");
         Assert.Equal(11, result);
 
         result = this._Interpret("\"blob\";");
@@ -112,22 +120,22 @@ public class TestIntegration
 
     [Fact]
     public void TestConditional() {
-        var result = this._Interpret("if (0) \"blob\" else \"doko\";");
+        var result = this._Interpret("if 0 then \"blob\" else \"doko\";");
         Assert.Equal("doko", result);
     }
 
     [Fact]
     public void TestBoolean() {
-        var result = this._Interpret("if (1 > 0) \"blob\" else \"doko\";");
+        var result = this._Interpret("if 1 > 0 then \"blob\" else \"doko\";");
         Assert.Equal("blob", result);
 
-        result = this._Interpret("if (1 == 0) \"blob\" else \"doko\";");
+        result = this._Interpret("if 1 == 0 then \"blob\" else \"doko\";");
         Assert.Equal("doko", result);
     }
 
     [Fact]
     public void TestRecursive() {
-        var result = this._Interpret("fib(n) = if (n > 1) fib(n-1) + fib(n-2) else 1;(fib(5));");
+        var result = this._Interpret("fib(n) = if n > 1 then fib(n-1) + fib(n-2) else 1;(fib(5));");
         Assert.Equal(8, result);
     }
 
@@ -167,7 +175,7 @@ public class TestIntegration
         Assert.Throws<NameError>(
                 delegate {
                 this._Interpret(
-                        "let a = (let b = 4 + a in b) in a;"
+                        "let a = (let b = 4 + a; in b); in a;"
                 );}
        );
     }
@@ -202,5 +210,43 @@ public class TestIntegration
         // [function] [name] == [function] = [type]();
         var result = this._Interpret("a, rest = {1,2,3};rest;");
         Assert.Equal("{2, 3, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestCommento() {
+        // [function] [name] == [function] = [type]();
+        var file = new FileInfo(Path.Join(BASE_DIR.ToString(), "Sample.geo"));
+        string code = File.ReadAllText(file.ToString());
+        var result = this._Interpret(code);
+        Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void TestLetinSequenceCombo() {
+        // [function] [name] == [function] = [type]();
+        var result = this._Interpret("let a, rest = {1,2,3}; b = 5; in a;");
+        Assert.Equal(1, result);
+    }
+
+    [Fact]
+    public void TestBuiltinTypeChecking() {
+        // we need an interpreter to evaluate the function to infer the type
+        // runtime type checking
+        var result = this._Interpret("log(2) + 5;");
+        Assert.Equal((float) Math.Log(2) + 5, result);
+    }
+
+    [Fact]
+    public void TestTypeError() {
+        // we need an interpreter to evaluate the function to infer the type
+        // runtime type checking
+        Assert.Throws<TypeError>(delegate {this._Interpret("5 + \"a\";");});
+    }
+
+    [Fact]
+    public void TestVarTypeCheck() {
+        // we need an interpreter to evaluate the function to infer the type
+        // runtime type checking
+        Assert.Throws<TypeError>(delegate {this._Interpret("a =1;a+\"\";");});
     }
 }

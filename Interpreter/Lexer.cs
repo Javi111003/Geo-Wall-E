@@ -77,11 +77,11 @@ public class Token {
     public int line;
     public int column;
 
-    public Token(string type_, int _line=0, int _column=0 ,string val = "") {
-        this.type = type_;
-        this.line = _line;
-        this.column = _column;
-        if (val == "") {
+    public Token(string type ,string val = null, int line=0, int column=0) {
+        this.type = type;
+        this.line = line;
+        this.column = column;
+        if (val is null) {
             this.val = this.type;
         }
         else {
@@ -122,16 +122,20 @@ public class Lexer {
         Tokens.MODULO,
         Tokens.EXP,
     };
-    public static Dictionary<string, Token> RESERVED_KEYWORDS = new Dictionary<string, Token>{
-        {"restore", new Token(Tokens.RESTORE)},
-        {"draw", new Token(Tokens.DRAW)}, // TODO construir estos tokens
-        {"undefined", new Token(Tokens.UNDEFINED)},
-        {"if", new Token(Tokens.IF)},
-        {"else", new Token(Tokens.ELSE)},
-        {"then", new Token(Tokens.THEN)},
-        {"let", new Token(Tokens.LET)},
-        {"in", new Token(Tokens.IN)},
+    public static Dictionary<string, Func<int, int, Token>> RESERVED_KEYWORDS = new Dictionary<string, Func<int, int, Token>>{
+        {"restore", Reserved(Tokens.RESTORE)},
+        {"draw", Reserved(Tokens.DRAW)}, // TODO construir estos tokens
+        {"undefined", Reserved(Tokens.UNDEFINED)},
+        {"if", Reserved(Tokens.IF)},
+        {"else", Reserved(Tokens.ELSE)},
+        {"then", Reserved(Tokens.THEN)},
+        {"let", Reserved(Tokens.LET)},
+        {"in", Reserved(Tokens.IN)},
     };
+
+    public static Func<int, int, Token> Reserved(string name) {
+        return (int line, int column) => new Token(name, null, line, column);
+    }
 
     public Lexer(string text) {
         this.text = text;
@@ -184,11 +188,11 @@ public class Lexer {
     }
 
     public void Advance() {
-        if (this.current_char == "\n") {
+        // it's a string
+        if (this.current_char != "" && this.current_char[0] == '\n') {
             this.line += 1;
             this.column = 0;
         }
-
         this.pos += 1;
         this.column += 1;
         if (this.pos > this.text.Length - 1) {
@@ -220,9 +224,9 @@ public class Lexer {
         if (this.current_char == "." && IsDigit(this.Peek())) {
             this.Advance();
             string mantisa = this.GetResult((string s) => IsDigit(s));
-            return new Token(Tokens.FLOAT, this.line, this.column, integer.ToString() + "." + mantisa.ToString());
+            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString(), this.line, this.column);
         }
-        return new Token(Tokens.INTEGER, this.line, this.column, integer);
+        return new Token(Tokens.INTEGER, integer, this.line, this.column);
 
     }
 
@@ -238,7 +242,7 @@ public class Lexer {
         // pass final '"'
         this.Advance();
 
-        return new Token(Tokens.STRING, this.line, this.column, result);
+        return new Token(Tokens.STRING, result, this.line, this.column);
     }
 
     public Token Id() {
@@ -248,10 +252,10 @@ public class Lexer {
 
         string result = this.GetResult((string s) => IsAlnum(s));
         if (RESERVED_KEYWORDS.ContainsKey(result)) {
-            token = RESERVED_KEYWORDS[result];
+            token = RESERVED_KEYWORDS[result](this.line, this.column);
         }
         else {
-            token = new Token(Tokens.ID, this.line, this.column, result);
+            token = new Token(Tokens.ID, result, this.line, this.column);
         }
 
         return token;
@@ -262,6 +266,10 @@ public class Lexer {
             if (this.current_char == " ") {
                 // skip whitespace
                 this.GetResult((string s) => s == " ");
+                continue;
+            }
+            else if (this.current_char[0] == '\n') {
+                this.Advance();
                 continue;
             }
 
@@ -283,15 +291,17 @@ public class Lexer {
             // don't forget there are composite tokens as well as single-character tokens
             string token_repr = Tokens.FromValue(this.current_char, this.Peek());
             if (token_repr == null) {
-                this.Error(new LexingError("Invalid character"));
+                this.Error(new LexingError($"Invalid character {(int) this.current_char[0]}"));
             }
 
-            if (token_repr == "//")//Es un comentario por tanto se ignora el resto de la línea
-            {
-                while (current_char != "\n") 
-                { this.Advance();
-                    return GetNextToken();
-                }
+            if (token_repr == "//") {
+                // Es un comentario por tanto se ignora el resto de la linea
+                this.GetResult((string s) => s[0] != '\n');
+                // we are in newline
+                // advance
+                this.Advance();
+
+                return this.GetNextToken();
             }
 
             // special handling for composite tokens
@@ -299,17 +309,18 @@ public class Lexer {
                 this.Advance();
             }
           
-            return new Token(token_repr, 0, 0);
+            return new Token(token_repr, null, this.line, this.column);
         }
-        return new Token(Tokens.EOF, this.line, this.column);
+        return new Token(Tokens.EOF, null, this.line, this.column);
     }
-    public Token[] GetAllTokens()//Por si implementamos lo del move back sobre el array de tokens
+    public Token[] GetAllTokens()
     {
         List<Token>tokens = new List<Token>();
-        while (GetNextToken().type != Tokens.EOF)
-        {
+        while (this.current_char != "") {
             tokens.Add(GetNextToken());
         }
+        // add EOF
+        tokens.Add(new Token(Tokens.EOF, null, this.line, this.column));
         return tokens.ToArray();
     }
 }

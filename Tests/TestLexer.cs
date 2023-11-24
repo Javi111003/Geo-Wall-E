@@ -56,13 +56,19 @@ public class TestLexer
 
     [Fact]
     public void TestConditional() {
-        Lexer l = new Lexer("if (0) \"blob\" else \"doko\"");
+        Lexer l = new Lexer("if 0 then \"blob\" else \"doko\"");
         Assert.Equal(l.GetNextToken(), new Token(Tokens.IF, "if"));
-        l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.INTEGER, "0"));
         l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "blob"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ELSE, "else"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "doko"));
+    }
+
+    [Fact]
+    public void TestNewline() {
+        Lexer l = new Lexer("hello\nworld");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "hello"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "world"));
     }
 }

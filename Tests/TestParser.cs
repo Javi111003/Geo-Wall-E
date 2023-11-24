@@ -13,19 +13,6 @@ public class TestParser
         return parser.Parse();
     }
 
-    public Interpreter.Interpreter PrepareInterpreter(string text) {
-        Lexer lexer = new Lexer(text);
-        Parser parser = new Parser(lexer);
-
-        return new Interpreter.Interpreter(parser);
-    }
-
-    public dynamic Interpret(string text) {
-        return this.PrepareInterpreter(text).Interpret();
-    }
-
-
-
     public static void AssertEqual(dynamic a, AST b, Context ctx = null) {
         Assert.Equal(a, b.Eval(ctx));
     }
@@ -37,24 +24,19 @@ public class TestParser
     }
 
     [Fact]
-    public void TestBuiltinTypeChecking() {
-        // we need an interpreter to evaluate the function to infer the type
-        // runtime type checking
-        var result = this.Interpret("log(2) + 5;");
-        Assert.Equal((float) Math.Log(2) + 5, result);
+    public void TestLetinType() {
+        var result = (BlockNode) this.Prepare("let a = 5; in a;");
+        Assert.Equal(AST<object>.INTEGER, result.blocks[0].Type);
     }
 
     [Fact]
-    public void TestTypeError() {
-        // we need an interpreter to evaluate the function to infer the type
-        // runtime type checking
-        Assert.Throws<TypeError>(delegate {this.Interpret("5 + \"a\";");});
+    public void TestLetinTypeError() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("let a = 5; in a + \"blob\";");});
     }
 
     [Fact]
-    public void TestVarTypeCheck() {
-        // we need an interpreter to evaluate the function to infer the type
-        // runtime type checking
-        Assert.Throws<TypeError>(delegate {this.Interpret("a =1;a+\"\";");});
+    public void TestLetinAsExpr() {
+        var result = (BlockNode) this.Prepare("1 + (let x = 2; in x * x);");
+        Assert.Equal(AST<object>.FLOAT, result.blocks[0].Type);
     }
 }
