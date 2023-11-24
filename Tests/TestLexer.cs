@@ -27,6 +27,12 @@ public class TestLexer
         l.GetNextToken();
         Assert.Throws<LexingError>(l.GetNextToken);
     }
+    [Fact]
+    public void TestBadID()
+    {
+        Lexer l = new Lexer("1a");
+        Assert.Throws<LexingError>(l.GetNextToken);
+    }
 
     [Fact]
     public void TestFloat() {
@@ -105,7 +111,6 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "color"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "blue"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
-        l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.DRAW, "draw"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "line"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.LPAREN, "("));
@@ -114,7 +119,6 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p2"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.RPAREN, ")"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
-        l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.RESTORE, "restore"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
     }

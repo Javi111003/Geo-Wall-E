@@ -281,6 +281,8 @@ public class Lexer {
             }
 
             if (IsDigit(this.current_char)) {
+                string next = Peek();
+                if (IsAlpha(next)||next=="_") { this.Error(new LexingError($"Invalid character {GetResult((string s)=>s=="_"||IsAlpha(s))}")); }
                 return this.Number();
             }
 
