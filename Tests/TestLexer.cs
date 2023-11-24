@@ -71,4 +71,52 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "hello"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "world"));
     }
+    [Fact]
+    public void TestConstant()
+    {
+        Lexer l = new Lexer("m = measure(p1,p2)");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "m"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ASSIGN, "="));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "measure"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.LPAREN, "("));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p1"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.COMMA, ","));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p2"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.RPAREN, ")"));
+    }
+    [Fact]
+    public void TestSequence()
+    {
+        Lexer l = new Lexer("a,b,_ = { p1 }");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "a"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.COMMA, ","));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "b"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.COMMA, ","));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.UNDERSCORE, "_"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ASSIGN, "="));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.SEQUENCE_START, "{"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p1"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.SEQUENCE_END, "}"));
+    }
+    [Fact]
+    public void TestMultiLine()
+    {
+        Lexer l = new Lexer("color blue;\ndraw line(p1, p2);\nrestore;");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "color"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "blue"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
+        l.GetNextToken();
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.DRAW, "draw"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "line"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.LPAREN, "("));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p1"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.COMMA, ","));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p2"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.RPAREN, ")"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
+        l.GetNextToken();
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.RESTORE, "restore"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
+    }
+
 }

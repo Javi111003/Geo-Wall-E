@@ -30,6 +30,8 @@ public static class Tokens {
     public static string RPAREN = ")";
     public static string HIGHER = ">";
     public static string EQUALS = "==";
+    public static string HIGHEREQUAL = ">=";
+    public static string LOWEREQUAL = "<=";
     public static string LOWER = "<";
     public static string ASSIGN = "=";
     public static string DOT = ".";
