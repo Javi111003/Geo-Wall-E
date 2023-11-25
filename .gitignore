@@ -12,4 +12,5 @@
 #vs
 **/.vs/*
 *.sln
-
+#lut
+*.lutconfig
