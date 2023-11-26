@@ -51,4 +51,26 @@ public class TestParser
     public void TestConditionalTypeCheck() {
         Assert.Throws<TypeError>(delegate {this.Prepare("if 1 then \"blob\" else 1;");});
     }
+
+    [Fact]
+    public void TestConditionalBodyTypeCheck() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("if 1+\"\" then 1 else 1;");});
+        Assert.Throws<TypeError>(delegate {this.Prepare("if 1 then 1+\"\" else 1;");});
+        Assert.Throws<TypeError>(delegate {this.Prepare("if 1 then 1 else 1+\"\";");});
+    }
+
+    [Fact]
+    public void TestVariableDeclTypeCheck() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("a = \"\"+1;");});
+    }
+
+    [Fact]
+    public void TestSequenceTypeCheck() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("{\"\", 1};");});
+    }
+
+    [Fact]
+    public void TestFunctionTypeCheck() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("a() = 1 + \"\";");});
+    }
 }

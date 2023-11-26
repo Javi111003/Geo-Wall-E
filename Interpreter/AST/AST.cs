@@ -45,6 +45,7 @@ public class AST<T>: AST {
 
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
         {FLOAT, FloatOp},
+        {INTEGER, FloatOp},
         {BOOL, FloatOp},
         {STRING, StrOp},
     };
@@ -73,15 +74,9 @@ public class AST<T>: AST {
     public static string ToStr() {
         return RevTypes[typeof(T)];
     }
+
     public static string ToStr(Type type) {
         return RevTypes[type];
-    }
-    public static Type ToType(string str) {
-        return Types[str];
-    }
-
-    public static Type InferType(AST<object> ast) {
-        return Types[ast.Type];
     }
 }
 
@@ -112,6 +107,11 @@ public class VariableDeclaration: AST {
             return "<(Variable) [name: " + this.name + ", value: undefined]>";
         }
         return "<(Variable) [name: " + this.name + ", value: " + this.expression.ToString() + "]>";
+    }
+
+    public override Exception Check() {
+        // propagate type checking
+        return this.expression.Check();
     }
 }
 
@@ -148,8 +148,7 @@ public class Variable : AST {
     }
 }
 
-// always dynamic; we just don't know
-// that said we can change it (in case of sequences it's a must)
+// always dynamic; a block of ASTs doesn't have a static type
 public class BlockNode: AST {
     // Contains a set of evaluables
     // only the last block is returned to the interpreter
@@ -350,6 +349,17 @@ public class Conditional : AST {
         // TODO thesis and antithesis have the same type (or dynamic etc etc)
         // NOTE we need not to check the type of the hypothesis--everything evals to either True or False
         // almost the same as binaryops.Check()
+
+        var exc = new List<Exception>{
+            this.hypothesis.Check(),
+            this.thesis.Check(),
+            this.antithesis.Check(),
+        };
+        foreach(Exception item in exc) {
+            if (!(item is null)) {
+                return item;
+            }
+        }
 
         bool dynamic_expr = this.thesis.Type == AST<object>.DYNAMIC || this.antithesis.Type == AST<object>.DYNAMIC;
         bool right_type = AST<object>.Compatible[this.thesis.Type].Contains(this.antithesis.Type);

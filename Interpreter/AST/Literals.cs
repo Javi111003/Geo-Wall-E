@@ -129,6 +129,33 @@ public class Terms: AST {
         }
     }
 
+    public override Exception Check() {
+        if (this.IsInfinite) {
+            // INTEGER
+            return null;
+        }
+        // finite
+        // check all types
+        //
+        // the first check will be true
+        // but it could also be DYNAMIC
+        string type = this.Type;
+        foreach(AST item in this) {
+            if (item.Type == AST<object>.DYNAMIC) {
+                return null;
+            }
+            bool right_type = AST<object>.Compatible[type].Contains(item.Type);
+            if (!right_type) {
+                Exception exc = new TypeError(
+                    $"Inconsistent types of elements for secuence. Expected {type} found {item.Type}"
+                );
+                return exc;
+            }
+        }
+
+        return null;
+    }
+
     public override string ToString() {
         StringBuilder str = new StringBuilder("{");
         if (!this.IsInfinite) {
@@ -160,6 +187,10 @@ public class SequenceLiteral : Literal<Terms> {
 
     public override string ToString() {
         return this.val.ToString();
+    }
+
+    public override Exception Check() {
+        return this.val.Check();
     }
 }
 
