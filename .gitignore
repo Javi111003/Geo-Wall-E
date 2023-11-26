@@ -9,4 +9,8 @@
 *.aux
 *.log
 *.toc
-
+#vs
+**/.vs/*
+*.sln
+#lut
+*.lutconfig

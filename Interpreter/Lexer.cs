@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Xml.Serialization;
 
 namespace Interpreter;
 
@@ -19,30 +20,38 @@ public static class Tokens {
     public static string FLOAT = "FLOAT";
     public static string STRING = "STRING";
     public static string PLUS = "+";
-    public static string  MINUS = "-";
+    public static string MINUS = "-";
     public static string MULT = "*";
     public static string DIV = "/";
+    public static string COMMENT = "//";
     public static string MODULO = "%";
     public static string EXP = "^";
     public static string LPAREN = "(";
     public static string RPAREN = ")";
     public static string HIGHER = ">";
     public static string EQUALS = "==";
+    public static string HIGHEREQUAL = ">=";
+    public static string LOWEREQUAL = "<=";
     public static string LOWER = "<";
     public static string ASSIGN = "=";
-    public static string FINLINE = "=>";
     public static string DOT = ".";
     public static string END = ";";
     public static string EOF = "";
-    public static string VAR = "var";
+    public static string DRAW = "draw";
+    public static string RESTORE = "restore";
+    public static string UNDEFINED = "undefined";
+    public static string THEN = "then";
+    public static string ELSE = "else";
+    public static string IF = "if";
     public static string LET = "let";
     public static string IN = "in";
-    public static string IF = "if";
-    public static string  ELSE = "else";
-    public static string  FUNCTION = "function";
     public static string QUOTATION = "\"";
-    public static string  COMMA = ",";
-    public static string  NOT = "!";
+    public static string COMMA = ",";
+    public static string NOT = "!";
+    public static string SEQUENCE_END = "}";
+    public static string SEQUENCE_START = "{";
+    public static string UNDERSCORE = "_";
+
 
     public static string FromValue(string token1, string token2) {
         FieldInfo[] fields = typeof(Tokens).GetFields();
@@ -67,10 +76,14 @@ public static class Tokens {
 public class Token {
     public string type;
     public string val;
+    public int line;
+    public int column;
 
-    public Token(string type_, string val = "") {
-        this.type = type_;
-        if (val == "") {
+    public Token(string type ,string val = null, int line=0, int column=0) {
+        this.type = type;
+        this.line = line;
+        this.column = column;
+        if (val is null) {
             this.val = this.type;
         }
         else {
@@ -102,7 +115,7 @@ public class Lexer {
     public int line;
     public int column;
 
-    public static HashSet<string> LITERALS = new HashSet<string>{Tokens.STRING, Tokens.INTEGER, Tokens.FLOAT};
+    public static HashSet<string> LITERALS = new HashSet<string>{Tokens.STRING, Tokens.INTEGER, Tokens.FLOAT, Tokens.SEQUENCE_START};
     public static HashSet<string> UNARY = new HashSet<string>{Tokens.MINUS, Tokens.NOT};
     public static HashSet<string> CONDITIONALS = new HashSet<string>{Tokens.EQUALS, Tokens.HIGHER, Tokens.LOWER};
     public static HashSet<string> OPERATIONS = new HashSet<string>{
@@ -111,14 +124,20 @@ public class Lexer {
         Tokens.MODULO,
         Tokens.EXP,
     };
-    public static Dictionary<string, Token> RESERVED_KEYWORDS = new Dictionary<string, Token>{
-        {"in", new Token(Tokens.IN)},
-        {"let", new Token(Tokens.LET)},
-        {"var", new Token(Tokens.VAR)},
-        {"function", new Token(Tokens.FUNCTION)},
-        {"if", new Token(Tokens.IF)},
-        {"else", new Token(Tokens.ELSE)}
+    public static Dictionary<string, Func<int, int, Token>> RESERVED_KEYWORDS = new Dictionary<string, Func<int, int, Token>>{
+        {"restore", Reserved(Tokens.RESTORE)},
+        {"draw", Reserved(Tokens.DRAW)}, // TODO construir estos tokens
+        {"undefined", Reserved(Tokens.UNDEFINED)},
+        {"if", Reserved(Tokens.IF)},
+        {"else", Reserved(Tokens.ELSE)},
+        {"then", Reserved(Tokens.THEN)},
+        {"let", Reserved(Tokens.LET)},
+        {"in", Reserved(Tokens.IN)},
     };
+
+    public static Func<int, int, Token> Reserved(string name) {
+        return (int line, int column) => new Token(name, null, line, column);
+    }
 
     public Lexer(string text) {
         this.text = text;
@@ -142,24 +161,6 @@ public class Lexer {
         throw exception;
    }
 
-    public static bool PatternMatching(string condition, string character) {
-        if (condition == "space") {
-            return character == " ";
-        }
-        else if (condition == "not_quotation") {
-            return character != "\"";
-        }
-        else if (condition == "digit") {
-            return IsDigit(character);
-        }
-        else if (condition == "alnum") {
-            return IsAlnum(character);
-        }
-        else {
-            throw new ArgumentException("Invalid condition" + condition);
-        }
-    }
-
     public static bool IsDigit(string s) {
         string pattern = @"[0-9]";
         return Regex.Match(s, pattern).Success;
@@ -177,25 +178,23 @@ public class Lexer {
 
     // 
 
-    public string GetResult(string condition) {
+    public string GetResult(Func<string, bool> condition) {
         StringBuilder result = new StringBuilder();
-        bool pattern_matches = PatternMatching(condition, this.current_char);
-        // XXX I wish we had (easy) pattern-matching bullshit in Csharp...
-        while ((this.current_char != Tokens.EOF) && pattern_matches) {
+        // we have en (easy) way to do pattern-matching bullshit in Csharp!
+        while ((this.current_char != Tokens.EOF) && condition(this.current_char)) {
             result.Append(this.current_char);
             this.Advance();
-            pattern_matches = PatternMatching(condition, this.current_char);
         }
 
         return result.ToString();
     }
 
     public void Advance() {
-        if (this.current_char == "\n") {
+        // it's a string
+        if (this.current_char != "" && this.current_char[0] == '\n') {
             this.line += 1;
             this.column = 0;
         }
-
         this.pos += 1;
         this.column += 1;
         if (this.pos > this.text.Length - 1) {
@@ -221,22 +220,22 @@ public class Lexer {
     }
 
     public Token Number() {
-        string integer = this.GetResult("digit");
+        string integer = this.GetResult((string s) => IsDigit(s));
 
         // could be float
         if (this.current_char == "." && IsDigit(this.Peek())) {
             this.Advance();
-            string mantisa = this.GetResult("digit");
-            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString());
+            string mantisa = this.GetResult((string s) => IsDigit(s));
+            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString(), this.line, this.column);
         }
-        return new Token(Tokens.INTEGER, integer);
+        return new Token(Tokens.INTEGER, integer, this.line, this.column);
 
     }
 
     public Token String() {
         // pass '"'
         this.Advance();
-        string result = this.GetResult("not_quotation");
+        string result = this.GetResult((string s) => s != "\"");
         
         if (this.current_char == Tokens.EOF) {
             this.Error(new LexingError("Unterminated string literal"));
@@ -245,7 +244,7 @@ public class Lexer {
         // pass final '"'
         this.Advance();
 
-        return new Token(Tokens.STRING, result);
+        return new Token(Tokens.STRING, result, this.line, this.column);
     }
 
     public Token Id() {
@@ -253,12 +252,12 @@ public class Lexer {
         
         Token token;
 
-        string result = this.GetResult("alnum");
+        string result = this.GetResult((string s) => IsAlnum(s));
         if (RESERVED_KEYWORDS.ContainsKey(result)) {
-            token = RESERVED_KEYWORDS[result];
+            token = RESERVED_KEYWORDS[result](this.line, this.column);
         }
         else {
-            token = new Token(Tokens.ID, result);
+            token = new Token(Tokens.ID, result, this.line, this.column);
         }
 
         return token;
@@ -268,7 +267,11 @@ public class Lexer {
         while (this.current_char != Tokens.EOF) {
             if (this.current_char == " ") {
                 // skip whitespace
-                this.GetResult("space");
+                this.GetResult((string s) => s == " ");
+                continue;
+            }
+            else if (this.current_char[0] == '\n') {
+                this.Advance();
                 continue;
             }
 
@@ -278,7 +281,9 @@ public class Lexer {
             }
 
             if (IsDigit(this.current_char)) {
-                return this.Number();
+                string next = Peek();
+                if (IsAlpha(next)||next=="_") { this.Error(new LexingError($"Invalid character {GetResult((string s)=>s=="_"||IsAlpha(s))}")); }
+                else return this.Number();
             }
 
             if (this.current_char == "\"") {
@@ -290,16 +295,36 @@ public class Lexer {
             // don't forget there are composite tokens as well as single-character tokens
             string token_repr = Tokens.FromValue(this.current_char, this.Peek());
             if (token_repr == null) {
-                this.Error(new LexingError("Invalid character"));
+                this.Error(new LexingError($"Invalid character {(int) this.current_char[0]}"));
+            }
+
+            if (token_repr == "//") {
+                // Es un comentario por tanto se ignora el resto de la linea
+                this.GetResult((string s) => s[0] != '\n');
+                // we are in newline
+                // advance
+                this.Advance();
+
+                return this.GetNextToken();
             }
 
             // special handling for composite tokens
             for (int i = 0; i < token_repr.Length; i++) {
                 this.Advance();
             }
-
-            return new Token(token_repr);
+          
+            return new Token(token_repr, null, this.line, this.column);
         }
-        return new Token(Tokens.EOF);
+        return new Token(Tokens.EOF, null, this.line, this.column);
+    }
+    public Token[] GetAllTokens()
+    {
+        List<Token>tokens = new List<Token>();
+        while (this.current_char != "") {
+            tokens.Add(GetNextToken());
+        }
+        // add EOF
+        tokens.Add(new Token(Tokens.EOF, null, this.line, this.column));
+        return tokens.ToArray();
     }
 }
