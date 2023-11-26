@@ -56,8 +56,8 @@ public static class Tokens {
     public static string FromValue(string token1, string token2) {
         FieldInfo[] fields = typeof(Tokens).GetFields();
 
-        string composite = token1 + token2;
         foreach(FieldInfo field in fields) {
+            string composite = token1 + token2;
             if ((string) field.GetValue(null) == composite) {
                 return composite;
             }
@@ -74,14 +74,17 @@ public static class Tokens {
 }
 
 public class Token {
+    // this can't be "Type" because it could be confused with AST.Type
+    // (so when I Ctrl+F "type" i know it will be token.type and not AST.Type)
+    // val is also not capitalized for consistency
     public string type;
     public string val;
-    public int line;
+    public int Line;
     public int column;
 
-    public Token(string type ,string val = null, int line=0, int column=0) {
+    public Token(string type ,string val = null, int Line=0, int column=0) {
         this.type = type;
-        this.line = line;
+        this.Line = Line;
         this.column = column;
         if (val is null) {
             this.val = this.type;
@@ -97,22 +100,15 @@ public class Token {
 
     public override bool Equals(object obj) => this.Equals(obj as Token);
     public bool Equals(Token other) {
-        return this == other;
+        return this.type == other.type && this.val == other.val;
     }
-
-    public static bool operator ==(Token left, Token right) {
-        return left.type == right.type && left.val == right.val;
-    }
-
-    // why do I have to define it???
-    public static bool operator !=(Token left, Token right) => !(left == right);
 }
 
 public class Lexer {
-    public string text;
-    public int pos;
+    public string Text;
+    protected int pos;
     public string current_char;
-    public int line;
+    public int Line;
     public int column;
 
     public static HashSet<string> LITERALS = new HashSet<string>{Tokens.STRING, Tokens.INTEGER, Tokens.FLOAT, Tokens.SEQUENCE_START};
@@ -136,23 +132,23 @@ public class Lexer {
     };
 
     public static Func<int, int, Token> Reserved(string name) {
-        return (int line, int column) => new Token(name, null, line, column);
+        return (int Line, int column) => new Token(name, null, Line, column);
     }
 
-    public Lexer(string text) {
-        this.text = text;
+    public Lexer(string Text) {
+        this.Text = Text;
         this.pos = 0;
-        this.current_char = this.text[this.pos].ToString();
+        this.current_char = this.Text[this.pos].ToString();
 
-        this.line = 1;
+        this.Line = 1;
         this.column = 1;
     }
 
     public void Error(Exception exception) {
         Console.WriteLine(
-            "Error lexing line " + this.line.ToString() + " col " + (string) this.column.ToString()
+            "Error lexing line " + this.Line.ToString() + " col " + (string) this.column.ToString()
         );
-        Console.WriteLine(this.text);
+        Console.WriteLine(this.Text);
         for (int i = 0; i < this.column - 1; i++) {
             Console.Write(" ");
         }
@@ -192,30 +188,30 @@ public class Lexer {
     public void Advance() {
         // it's a string
         if (this.current_char != "" && this.current_char[0] == '\n') {
-            this.line += 1;
+            this.Line += 1;
             this.column = 0;
         }
         this.pos += 1;
         this.column += 1;
-        if (this.pos > this.text.Length - 1) {
+        if (this.pos > this.Text.Length - 1) {
             // EOF
             this.current_char = "";
         }
         else {
-            this.current_char = this.text[this.pos].ToString();
+            this.current_char = this.Text[this.pos].ToString();
         }
     }
 
     public string Peek() {
         int peek_pos = this.pos + 1;
-        if (peek_pos > this.text.Length - 1) {
+        if (peek_pos > this.Text.Length - 1) {
             // EOF
             // XXX could this cause a bug with composite characters at the end
             // of the input? no sane persion would do that but...
             return "";
         }
         else {
-            return this.text[peek_pos].ToString();
+            return this.Text[peek_pos].ToString();
         }
     }
 
@@ -226,9 +222,9 @@ public class Lexer {
         if (this.current_char == "." && IsDigit(this.Peek())) {
             this.Advance();
             string mantisa = this.GetResult((string s) => IsDigit(s));
-            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString(), this.line, this.column);
+            return new Token(Tokens.FLOAT, integer.ToString() + "." + mantisa.ToString(), this.Line, this.column);
         }
-        return new Token(Tokens.INTEGER, integer, this.line, this.column);
+        return new Token(Tokens.INTEGER, integer, this.Line, this.column);
 
     }
 
@@ -244,7 +240,7 @@ public class Lexer {
         // pass final '"'
         this.Advance();
 
-        return new Token(Tokens.STRING, result, this.line, this.column);
+        return new Token(Tokens.STRING, result, this.Line, this.column);
     }
 
     public Token Id() {
@@ -254,10 +250,10 @@ public class Lexer {
 
         string result = this.GetResult((string s) => IsAlnum(s));
         if (RESERVED_KEYWORDS.ContainsKey(result)) {
-            token = RESERVED_KEYWORDS[result](this.line, this.column);
+            token = RESERVED_KEYWORDS[result](this.Line, this.column);
         }
         else {
-            token = new Token(Tokens.ID, result, this.line, this.column);
+            token = new Token(Tokens.ID, result, this.Line, this.column);
         }
 
         return token;
@@ -281,9 +277,12 @@ public class Lexer {
             }
 
             if (IsDigit(this.current_char)) {
-                string next = Peek();
-                if (IsAlpha(next)||next=="_") { this.Error(new LexingError($"Invalid character {GetResult((string s)=>s=="_"||IsAlpha(s))}")); }
-                else return this.Number();
+                Token num = this.Number();
+                if (this.current_char == "_" || IsAlpha(this.current_char)) {
+                    this.Error(new LexingError("Invalid numeric literal"));
+                }
+
+                return num;
             }
 
             if (this.current_char == "\"") {
@@ -313,9 +312,9 @@ public class Lexer {
                 this.Advance();
             }
           
-            return new Token(token_repr, null, this.line, this.column);
+            return new Token(token_repr, null, this.Line, this.column);
         }
-        return new Token(Tokens.EOF, null, this.line, this.column);
+        return new Token(Tokens.EOF, null, this.Line, this.column);
     }
     public Token[] GetAllTokens()
     {
@@ -324,7 +323,7 @@ public class Lexer {
             tokens.Add(GetNextToken());
         }
         // add EOF
-        tokens.Add(new Token(Tokens.EOF, null, this.line, this.column));
+        tokens.Add(new Token(Tokens.EOF, null, this.Line, this.column));
         return tokens.ToArray();
     }
 }

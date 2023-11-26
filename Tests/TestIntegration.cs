@@ -249,4 +249,12 @@ public class TestIntegration
         // runtime type checking
         Assert.Throws<TypeError>(delegate {this._Interpret("a =1;a+\"\";");});
     }
+
+    [Fact]
+    public void TestInfSeq() {
+        // we need an interpreter to evaluate the function to infer the type
+        // runtime type checking
+        var result = this._Interpret("a, b, c, rest = {1...}; c;");
+        Assert.Equal(3, result);
+    }
 }

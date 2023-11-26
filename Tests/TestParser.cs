@@ -39,4 +39,16 @@ public class TestParser
         var result = (BlockNode) this.Prepare("1 + (let x = 2; in x * x);");
         Assert.Equal(AST<object>.FLOAT, result.blocks[0].Type);
     }
+
+    [Fact]
+    public void TestInfSeq() {
+        var result = (BlockNode) this.Prepare("a,b,c = {1...};c;b;");
+        Assert.Equal(AST<object>.SEQUENCE, result.blocks[1].Type);
+        Assert.Equal(AST<object>.INTEGER, result.blocks[2].Type);
+    }
+
+    [Fact]
+    public void TestConditionalTypeCheck() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("if 1 then \"blob\" else 1;");});
+    }
 }

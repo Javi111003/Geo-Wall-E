@@ -60,7 +60,6 @@ public class Context : Dictionary<string, dynamic> {
 
     public Context Clone() {
         Context ret = new Context();
-
         foreach(KeyValuePair<string, dynamic> entry in this) {
             ret.Add(entry.Key, (dynamic) entry.Value);
         }
@@ -70,7 +69,7 @@ public class Context : Dictionary<string, dynamic> {
 
 public class AST {
 
-    private string type;
+    protected string type;
 
     public virtual string Type {
         get {return this.type;}
@@ -736,31 +735,48 @@ public class Lambda : AST {
 
 public class Conditional : AST {
     // we convert it to bool
-    AST hipotesis;
-    AST tesis;
+    AST hypothesis;
+    AST thesis;
     AST antithesis;
 
+    public override string Type {
+        get {
+            return this.thesis.Type;
+        }
+    }
+
     public Conditional(
-        AST hipotesis,
-        AST tesis,
+        AST hypothesis,
+        AST thesis,
         AST antithesis
     ) {
-        this.hipotesis = hipotesis;
-        this.tesis = tesis;
+        this.hypothesis = hypothesis;
+        this.thesis = thesis;
         this.antithesis = antithesis;
    }
 
     public override dynamic Eval(Context ctx) {
-        bool res = Convert.ToBoolean(this.hipotesis.Eval(ctx));
+        bool res = Convert.ToBoolean(this.hypothesis.Eval(ctx));
         if (res) {
-            return this.tesis.Eval(ctx);
+            return this.thesis.Eval(ctx);
         }
         return this.antithesis.Eval(ctx);
     }
 
     public override Exception Check() {
-        // TODO tesis and antithesis have the same type (or dynamic etc etc)
-        return null;
+        // TODO thesis and antithesis have the same type (or dynamic etc etc)
+        // NOTE we need not to check the type of the hypothesis--everything evals to either True or False
+        // almost the same as binaryops.Check()
+
+        bool dynamic_expr = this.thesis.Type == AST<object>.DYNAMIC || this.antithesis.Type == AST<object>.DYNAMIC;
+        bool right_type = AST<object>.Compatible[this.thesis.Type].Contains(this.antithesis.Type);
+
+        if (dynamic_expr || right_type) {
+            return null;
+        }
+
+        string msg = $"Type mismatch inside Conditional statement : {this.thesis.Type} != {this.antithesis.Type}";
+        return new TypeError(msg);
     }
 }
 
@@ -814,9 +830,9 @@ public class Parser {
    }
 
     public void Error(Exception exception) {
-        Console.WriteLine($"Error parsing line {this.lexer.line} col {this.current_token.column}");
+        Console.WriteLine($"Error parsing line {this.current_token.Line} col {this.current_token.column}");
         // XXX write last line
-        Console.WriteLine(this.lexer.text);
+        Console.WriteLine(this.lexer.Text);
         for (int i = 0; i < this.current_token.column - 2; i++) {
             Console.Write(" "); 
         }
@@ -911,7 +927,7 @@ public class Parser {
         return node;
     }
 
-    private (string, string?) DeclareFirst(List<AST> variables, List<string> names) {
+    protected (string, string?) DeclareFirst(List<AST> variables, List<string> names) {
         // helper function to declare a variable
         // the first time it can have a type before the name 
         // so it's an special case
@@ -1028,10 +1044,10 @@ public class Parser {
             SequenceLiteral seq = (SequenceLiteral) val;
             var sequence = seq.Clone();
 
-            int counter = 0;
             // we pass the reference to all the variables so when they are evaluated
             // we modify the index @ Sequence.val and give a different value each time
             Terms term = sequence.Val();
+            int counter = 0;
             foreach(VariableDeclaration item in variables) {
                 if (counter == (variables.Count() - 1)) {
                     // minus the last one
@@ -1067,20 +1083,20 @@ public class Parser {
     public Conditional ConditionalStmt() {
         this.Eat(Tokens.IF);
 
-        AST hipotesis = this.Expr();
+        AST hypothesis = this.Expr();
 
         this.Eat(Tokens.THEN);
 
-        AST tesis = this.Expr();
+        AST thesis = this.Expr();
 
         this.Eat(Tokens.ELSE);
 
         AST antithesis = this.Expr();
 
         return new Conditional(
-            hipotesis,
-            new BlockNode(new List<AST>{tesis}),
-            new BlockNode(new List<AST>{antithesis})
+            hypothesis,
+            thesis,
+            antithesis
         );
     }
 
@@ -1116,24 +1132,28 @@ public class Parser {
                 this.Error(new SyntaxError("Too many starting points for sequence. Expected one element (found many)"));
             }
             if (Type != AST<object>.INTEGER) {
-                this.Error(new TypeError($"Can not make an infinite sequence of {Type} (try using integers)"));
+                this.Error(new TypeError($"Can not make an infinite sequence of {Type} (try using integers literals)"));
             }
             // first == last
             this.Eat(Tokens.DOT);
             this.Eat(Tokens.DOT);
             this.Eat(Tokens.DOT);
 
+            int start = first.Eval(null);
+            int? end;
             if (this.current_token.type == Tokens.SEQUENCE_END) {
-                last = null;
+                end = null;
             }
             else {
                 if (this.current_token.type != Tokens.INTEGER) {
                     this.Error(new TypeError($"Range end must be an integer. Found {this.current_token.type}"));
                 }
-                last = this.LiteralNode();
+                end = this.LiteralNode().Eval(null);
             }
 
-            Terms term_fin = new Terms(first.Eval(null), last.Eval(null));
+            Terms term_fin = new Terms(start, end);
+
+            this.Eat(Tokens.SEQUENCE_END);
 
             return new SequenceLiteral(term_fin);
         }
@@ -1317,7 +1337,7 @@ public class Parser {
         return BestGuess.Expression;
     }
 
-    private AST ParseNode() {
+    protected AST ParseNode() {
         AST node = null;
 
         int guessed = Guess();
@@ -1447,7 +1467,6 @@ class False : VariableDeclaration {
 
     public False() : base("False", new BoolLiteral(false)) {}
 }
-
 
 public class Interpreter {
     public Context GLOBAL_SCOPE = new Context();
