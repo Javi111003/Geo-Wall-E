@@ -27,6 +27,12 @@ public class TestLexer
         l.GetNextToken();
         Assert.Throws<LexingError>(l.GetNextToken);
     }
+    [Fact]
+    public void TestBadID()
+    {
+        Lexer l = new Lexer("1a");
+        Assert.Throws<LexingError>(l.GetNextToken);
+    }
 
     [Fact]
     public void TestFloat() {
@@ -45,7 +51,7 @@ public class TestLexer
 
     [Fact]
     public void TestFunction() {
-        Lexer l = new Lexer(" a(n) = 5 ");
+        Lexer l = new Lexer("a(n) = 5 ");
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "a"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.LPAREN, "("));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "n"));
@@ -56,15 +62,21 @@ public class TestLexer
 
     [Fact]
     public void TestConditional() {
-        Lexer l = new Lexer("if (0) then \"blob\" else \"doko\"");
+        Lexer l = new Lexer("if 0 then \"blob\" else \"doko\"");
         Assert.Equal(l.GetNextToken(), new Token(Tokens.IF, "if"));
-        l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.INTEGER, "0"));
         l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.THEN, "then"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "blob"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ELSE, "else"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "doko"));
+    }
+
+    [Fact]
+    public void TestNewline() {
+        Lexer l = new Lexer("hello\nworld");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "hello"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "world"));
     }
     [Fact]
     public void TestConstant()
@@ -100,7 +112,6 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "color"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "blue"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
-        Assert.Equal(l.GetNextToken(), new Token(Tokens.EOL, "\n"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.DRAW, "draw"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "line"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.LPAREN, "("));
@@ -109,10 +120,8 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p2"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.RPAREN, ")"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
-        Assert.Equal(l.GetNextToken(), new Token(Tokens.EOL, "\n"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.RESTORE, "restore"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
     }
-
 
 }

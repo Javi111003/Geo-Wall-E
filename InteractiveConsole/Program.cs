@@ -19,19 +19,19 @@ class Massa {
 	    Console.WriteLine(e);
 	    return;
 	}
-	
-        while (true) {
-            Console.Write(">>> ");
-            
-            try {
-                l = new Lexer(Console.ReadLine());
-                p = new Parser(l);
-                i.parser = p;
-                Console.WriteLine(i.Interpret());
-            }
-            catch (Exception e) {
-                Console.WriteLine(e);
-            }
+    Context c = p.global_context;
+    while (true) {
+        Console.Write(">>> ");
+        
+        try {
+            l = new Lexer(Console.ReadLine());
+            p = new Parser(l, c);
+            i.parser = p;
+            Console.WriteLine(i.Interpret());
         }
+        catch (Exception e) {
+            Console.WriteLine(e);
+        }
+    }
     }
 }
