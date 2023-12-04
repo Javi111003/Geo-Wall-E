@@ -154,26 +154,13 @@ public class Parser {
         // so it's an special case
         //
         // we modify "variables" and "names"
-        //
-        // FIXME fix this shite
 
         string name = this.current_token.val;
 
         this.Eat(Tokens.ID);
         // check sequence
-        SequenceLiteral seq = null;
         string type = null;
-        if (this.current_token.type == Tokens.SEQUENCE_START) {
-            seq = (SequenceLiteral) this.LiteralNode();
-            // the first string is the type
-            type = name;
-            name = this.current_token.val;
-            this.Eat(Tokens.ID);
-        }
-        else if (this.current_token.type == Tokens.ID) {
-            // NOTE we duplicate this code because if a sequence was declared here 
-            // it has to be followed by an ID or else is a syntax error
-            
+        if (this.current_token.type == Tokens.ID) {
             // name
             // what we got before was the type
             type = name;
@@ -193,10 +180,15 @@ public class Parser {
         }
         else if (type is not null) {
             // declaration
-            // [type] {args} [name]; is translated to name = type(args)
+            // [type] [name]; is translated to name = type()
             // where type is a function
             // thus
-            Function fun = new Function(type, new BlockNode(new List<AST>{seq}));
+            // XXX call handla
+
+            Function fun = new Function(
+                type,
+                new BlockNode(new List<AST>{new IntLiteral(0), new IntLiteral(0)})
+            );
             val = fun;
 
         }

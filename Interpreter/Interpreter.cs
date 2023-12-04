@@ -7,7 +7,19 @@ public class Interpreter {
     public AST _tree;
     public BlockNode BUILTINS = new BlockNode(
         new List<AST>{
-            new Print(), new Cos(), new Sin(), new Log(), new True(), new False()
+            new Print(),
+            new Cos(),
+            new Sin(),
+            new Log(),
+            new True(),
+            new False(),
+            new PointDecl(),
+            new LineDecl(),
+            new SegmentDecl(),
+            new RayDecl(),
+            new CircleDecl(),
+            new ArcDecl(),
+            new IntersectDecl()
         }
     );
 

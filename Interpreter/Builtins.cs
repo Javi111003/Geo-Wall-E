@@ -22,9 +22,7 @@ class PrintBlockNode : UnaryOperation<object, object> {
 class Print : FunctionDeclaration {
 
     public Print() : base(
-        "print",
-        new BlockNode(new List<AST>{new Variable("val")}),
-        new PrintBlockNode(new Variable("val"))
+        "print"
     ) {}
 }
 
@@ -39,9 +37,7 @@ class CosBlockNode : UnaryOperation<float, float> {
 class Cos : FunctionDeclaration {
 
     public Cos() : base(
-        "cos",
-        new BlockNode(new List<AST>{new Variable("val")}),
-        new CosBlockNode(new Variable("val"))
+        "cos"
     ) {}
 }
 
@@ -56,9 +52,7 @@ class SinBlockNode : UnaryOperation<float, float> {
 class Sin : FunctionDeclaration {
 
     public Sin() : base(
-        "sin",
-        new BlockNode(new List<AST>{new Variable("val")}),
-        new SinBlockNode(new Variable("val"))
+        "sin"
     ) {}
 }
 
@@ -73,9 +67,7 @@ class LogBlockNode : UnaryOperation<float, float> {
 class Log : FunctionDeclaration {
 
     public Log() : base(
-        "log",
-        new BlockNode(new List<AST>{new Variable("val")}),
-        new LogBlockNode(new Variable("val"))
+        "log"
     ) {}
 }
 
