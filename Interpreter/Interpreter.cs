@@ -19,7 +19,11 @@ public class Interpreter {
             new RayDecl(),
             new CircleDecl(),
             new ArcDecl(),
-            new IntersectDecl()
+            new IntersectDecl(),
+            new CountDecl(),
+            new RandomsDecl(),
+            new PointsDecl(),
+            new SamplesDecl()
         }
     );
 

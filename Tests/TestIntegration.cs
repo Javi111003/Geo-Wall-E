@@ -299,4 +299,28 @@ public class TestIntegration
         var result = this._Interpret("p1 = point(0, 1); p2 = point(1, 0);p3 = point(0, 0);intersect(line(p3, p1), line(p3, p2));");
         Assert.Equal("{<Point(0, 0)>, }", result.ToString());
     }
+
+    [Fact]
+    public void TestCount() {
+        var result = this._Interpret("a, b, rest = {1,2,3,4,5};count(rest);");
+        Assert.Equal(3, result);
+    }
+
+    [Fact]
+    public void TestRandoms() {
+        var result = this._Interpret("count(randoms());");
+        Assert.Equal(100, result);
+    }
+
+    [Fact]
+    public void TestPoints() {
+        var result = this._Interpret("points(line(point(0,0), point(0,1)));");
+        Assert.Equal("{<Point(1, 1)>, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestSamples() {
+        var result = this._Interpret("count(samples(line(point(0,0), point(0,1))));");
+        Assert.Equal(100, result);
+    }
 }

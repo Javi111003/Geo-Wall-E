@@ -273,7 +273,89 @@ class IntersectDecl : FunctionDeclaration {
 }
 
 // Utils
-class Count {}
-class Randoms {}
-class Points {}
-class Samples {}
+class CountDeclBlockNode : UnaryOperation<SequenceLiteral, int> {
+
+    public CountDeclBlockNode(AST seq) : base(seq) {}
+
+    public override int Operation(SequenceLiteral seq) {
+        return seq.Val().Count();
+    }
+}
+
+class CountDecl : FunctionDeclaration {
+
+    public CountDecl() : base(
+        "count",
+        param_count:1
+    ) {}
+}
+
+class RandomsDeclBlockNode : AST<SequenceLiteral> {
+
+    public RandomsDeclBlockNode() : base(AST<SequenceLiteral>.ToStr()) {}
+
+    public override dynamic Eval(Context ctx) {
+        Random rand = new Random();
+        var ls = new List<AST>();
+        for(int i = 0; i < 100; i++) {
+            ls.Add((AST) new FloatLiteral((float) 1/rand.Next(0, 1000)));
+        }
+        return new SequenceLiteral(new Terms(ls));
+    }
+}
+
+class RandomsDecl : FunctionDeclaration {
+
+    public RandomsDecl() : base(
+        "randoms",
+        param_count:0
+    ) {}
+}
+
+
+class PointsDeclBlockNode : UnaryOperation<Drawable, SequenceLiteral> {
+
+    public PointsDeclBlockNode(AST f1) : base(f1) {}
+
+    public override SequenceLiteral Operation(Drawable f1) {
+        // XXX call handler
+        return new SequenceLiteral(
+            new Terms(
+                // static typing and its consequences have been a disaster for the human race
+                (List<AST>) new List<AST>{
+                    new Literal<Point>(new Point(1, 1))
+                }
+            )
+         );
+    }
+}
+
+class PointsDecl : FunctionDeclaration {
+
+    public PointsDecl() : base(
+        "points",
+        param_count:1
+    ) {}
+}
+
+class SamplesDeclBlockNode : AST<SequenceLiteral> {
+
+    public SamplesDeclBlockNode() : base(AST<SequenceLiteral>.ToStr()) {}
+
+    public override dynamic Eval(Context ctx) {
+        Random rand = new Random();
+        var ls = new List<AST>();
+        for(int i = 0; i < 100; i++) {
+            ls.Add((AST) new Literal<Point>(new Point(0,0)));
+        }
+        return new SequenceLiteral(new Terms(ls));
+    }
+}
+
+class SamplesDecl : FunctionDeclaration {
+
+    public SamplesDecl() : base(
+        "samples",
+        param_count:0
+    ) {}
+}

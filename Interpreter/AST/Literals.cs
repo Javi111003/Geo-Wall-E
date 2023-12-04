@@ -133,7 +133,7 @@ public class Terms: AST {
         if (this.IsInfinite) {
             return Int32.MaxValue;
         }
-        return end - start;
+        return end - index - 1;
     }
 
     public override Exception Check() {
