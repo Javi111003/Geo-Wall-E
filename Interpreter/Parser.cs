@@ -15,6 +15,30 @@ public class Parser {
     // global
     public Context global_context;
     public Context local_context;
+    public static List<AST> BUILTINS = new List<AST>{
+        new Print(),
+        new Cos(),
+        new Sin(),
+        new Log(),
+        new True(),
+        new False(),
+        new Undefined(),
+        new Underscore(),
+        new PointDecl(),
+        new LineDecl(),
+        new SegmentDecl(),
+        new RayDecl(),
+        new CircleDecl(),
+        new ArcDecl(),
+        new IntersectDecl(),
+        new CountDecl(),
+        new RandomsDecl(),
+        new PointsDecl(),
+        new SamplesDecl(),
+        new ColorDecl(),
+        new RestoreDecl(),
+    };
+
 
     public Parser(Lexer lexer, Context context = null) {
         this.index = 0;
@@ -24,7 +48,7 @@ public class Parser {
         this.current_token = this.GetNextToken();
 
         if (context is null) {
-            this.global_context = this.local_context = new Context();
+            this.global_context = this.local_context = new Context(Parser.BUILTINS);
         }
         else {
             this.global_context = this.local_context = context;
@@ -71,11 +95,15 @@ public class Parser {
         }
     }
 
-    public AST TypeFor(string name) {
+    public AST TypeFor(string name, Type type) {
         if (this.local_context.ContainsKey(name)) {
-            return this.local_context[name];
+            var decl = this.local_context[name];
+            // XXX we can't detect if the user does something stupid like calling
+            // a variable here because True, for example is an instance
+            // and I don't know of an (easy) way to mimc Python's isinstance()
+            return decl;
         }
-        // XXX builtins
+        //Console.WriteLine($"WARNING: {name} is undefined");
         return null;
     }
 
@@ -105,7 +133,7 @@ public class Parser {
        return new BlockNode(args);
     }
 
-    public AST Namespace(string? name=null, bool local=false) {
+    public AST Namespace(string? name=null) {
         // XXX could be functiof of one argument
         // draw "loli"
         if (name is null) {
@@ -117,10 +145,10 @@ public class Parser {
         AST node;
         BlockNode args = this.Arguments();
         if (args is not null) {
-            node = new Function(name, args);
+            node = this.FunctionCall(name, args);
         }
         else {
-            VariableDeclaration declaration = (VariableDeclaration) this.TypeFor(name);
+            VariableDeclaration declaration = (VariableDeclaration) this.TypeFor(name, typeof(VariableDeclaration));
             Variable var_node = new Variable(name);
             node = var_node;
             var_node.declaration = declaration;
@@ -185,7 +213,7 @@ public class Parser {
             // thus
             // XXX call handla
 
-            Function fun = new Function(
+            Function fun = this.FunctionCall(
                 type,
                 new BlockNode(new List<AST>{new IntLiteral(0), new IntLiteral(0)})
             );
@@ -233,7 +261,7 @@ public class Parser {
                     val = null;
                 }
                 else {
-                    Function fun = new Function(type, new BlockNode(new List<AST>()));
+                    Function fun = this.FunctionCall(type, new BlockNode(new List<AST>()));
                     val = fun;
                 }
             }
@@ -280,17 +308,48 @@ public class Parser {
    }
 
     public AST FunctionDecl(string name) {
-        //string name = this.current_token.val;
-        //this.Eat(Tokens.ID);
+
+        // args are variables so we can use them here too
+        // we don't check types here (no need to) so to avoid any conflicts
+        // we nullify the context
+        this.local_context = new Context();
         BlockNode args = this.Arguments();
+        // clone
+        this.local_context = this.global_context.Clone();
+
+        // overwrite vars in the global ctx in case of conflict
+        // with dynamic
+        foreach(Variable arg in args) {
+            this.local_context[arg.name] = new VariableDeclaration(name, new AST<object>(AST<object>.DYNAMIC));
+        }
 
         if (this.current_token.type == Tokens.ASSIGN) {
             this.Eat(Tokens.ASSIGN);
-            // args are variables so we can use them here too
-            return new FunctionDeclaration(name, args, this.Expr());
+
+            // eval
+            var expr = this.Expr();
+            // restore
+            this.local_context = this.global_context;
+
+            var node = new FunctionDeclaration(name, args, expr);
+            this.local_context[node.name] = node;
+
+            return node;
+
         }
         // XXX normal fun
         return null;
+    }
+
+    public Function FunctionCall(string name, BlockNode args) {
+        // handle type context and all that shite
+
+        FunctionDeclaration fun_decl = null;
+        fun_decl = (FunctionDeclaration) this.TypeFor(name, typeof(FunctionDeclaration));
+        var fun = new Function(name, args);
+        fun.declaration = fun_decl;
+
+        return fun;
     }
 
     public Conditional ConditionalStmt() {
@@ -511,6 +570,29 @@ public class Parser {
         return node;
     }
 
+    public AST BuiltinSugar() {
+        // syntax sugar for some builtins (color, restore, draw, etc)
+        string name = this.current_token.val;
+        if (name == "draw") {
+            this.Eat(Tokens.DRAW);
+            var args = this.Expr();
+            // string
+            AST label = this.LiteralNode();
+            return this.FunctionCall(name, new BlockNode(new List<AST>{args, label}));
+        }
+        else if (name == "color") {
+            this.Eat(Tokens.COLOR);
+            return this.FunctionCall(name, new BlockNode(new List<AST>{this.LiteralNode()}));
+        }
+        else if (name == "restore") {
+            this.Eat(Tokens.RESTORE);
+            return this.FunctionCall(name, new BlockNode(new List<AST>()));
+        }
+        else {
+            throw new Exception("shouldn't happen");
+        }
+    }
+
     public int Guess() {
         // give an (educated) guess of what kind of tokens are coming next and how they should be parsed
 
@@ -521,6 +603,10 @@ public class Parser {
         int _let = 0;
         int others = 0;
         int counter = 0;
+
+        if (Lexer.HARD_CODED_BUILTINS.Contains(this.current_token.type)) {
+            return BestGuess.BuiltinSugar;
+        }
 
         while (token != Tokens.END && token != Tokens.EOF) {
             if (token == Tokens.ID) {
@@ -560,6 +646,9 @@ public class Parser {
         }
         else if (guessed == BestGuess.Declaration) {
             node = this.Declaration();
+        }
+        else if (guessed == BestGuess.BuiltinSugar) {
+            node = this.BuiltinSugar();
         }
 
         if (this.current_token.type != Tokens.END) {

@@ -201,6 +201,10 @@ public class BlockNode: AST {
         return null;
     }
 
+    public IEnumerator<AST> GetEnumerator() {
+        return this.blocks.GetEnumerator();
+    }
+
     public override string ToString() {
         return this.blocks.ToString();
     }
@@ -213,7 +217,7 @@ public class FunctionDeclaration: AST {
     public BlockNode args;
     public AST body;
 
-    public override string Type{
+    public override string Type {
         get {
             return this.body.Type;
         }
@@ -221,6 +225,7 @@ public class FunctionDeclaration: AST {
 
     public FunctionDeclaration(string name, BlockNode args=null, AST body=null, int param_count=1) {
         this.name = name;
+        // defaults for builtins
         if (args is null && body is null) {
             var variables = new List<AST>();
             for (int i = 0; i < param_count; i++) {

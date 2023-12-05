@@ -39,6 +39,7 @@ public abstract class BinaryOperation<T, R>: AST<R> {
 public class Sum : BinaryOperation<float, float> {
 
     public Sum(AST left, AST right): base(left, right) {}
+
    
     public override float Operation(float a, float b) {
         return a + b;
@@ -134,12 +135,6 @@ public class LowerEqual : BinaryOperation<float, bool>
 public abstract class UnaryOperation<T, R> : AST<R> {
 
     public AST block;
-
-    public override string Type {
-        get {
-            return this.block.Type;
-        }
-    }
 
     public UnaryOperation(AST block): base(AST<R>.ToStr()) {
         this.block = block;

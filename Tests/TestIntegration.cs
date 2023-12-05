@@ -323,4 +323,10 @@ public class TestIntegration
         var result = this._Interpret("count(samples(line(point(0,0), point(0,1))));");
         Assert.Equal(100, result);
     }
+
+    [Fact]
+    public void TestUnderscore() {
+        var result = this._Interpret("_;");
+        Assert.Equal("", result);
+    }
 }

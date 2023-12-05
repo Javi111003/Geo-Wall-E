@@ -359,3 +359,39 @@ class SamplesDecl : FunctionDeclaration {
         param_count:0
     ) {}
 }
+
+class ColorDeclBlockNode : UnaryOperation<string, object> {
+
+    public ColorDeclBlockNode(AST f1) : base(f1) {}
+
+    public override object Operation(string f1) {
+        // XXX call handler
+        return null;
+    }
+}
+
+class ColorDecl : FunctionDeclaration {
+
+    public ColorDecl() : base(
+        "color",
+        param_count:1
+    ) {}
+}
+
+class RestoreDeclBlockNode : AST {
+
+    public RestoreDeclBlockNode() : base(AST<object>.ToStr()) {}
+
+    public override dynamic Eval(Context ctx) {
+        // XXX call handler
+        return null;
+    }
+}
+
+class RestoreDecl : FunctionDeclaration {
+
+    public RestoreDecl() : base(
+        "restore",
+        param_count:0
+    ) {}
+}

@@ -83,3 +83,12 @@ class False : VariableDeclaration {
     public False() : base("False", new BoolLiteral(false)) {}
 }
 
+class Undefined : VariableDeclaration {
+
+    public Undefined() : base("undefined", new SequenceLiteral(new Terms(new List<AST>()))) {}
+}
+
+class Underscore : VariableDeclaration {
+
+    public Underscore() : base("_", new Literal<object>(null)) {}
+}

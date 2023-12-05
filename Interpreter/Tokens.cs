@@ -27,6 +27,7 @@ public static class Tokens {
     public static string END = ";";
     public static string EOF = "";
     public static string DRAW = "draw";
+    public static string COLOR = "color";
     public static string RESTORE = "restore";
     public static string UNDEFINED = "undefined";
     public static string THEN = "then";
@@ -39,7 +40,6 @@ public static class Tokens {
     public static string NOT = "!";
     public static string SEQUENCE_END = "}";
     public static string SEQUENCE_START = "{";
-    public static string UNDERSCORE = "_";
 
 
     public static string FromValue(string token1, string token2) {

@@ -3,6 +3,14 @@ namespace Interpreter;
 
 public class Context : Dictionary<string, dynamic> {
 
+    public Context(dynamic ls) {
+        foreach(var declaration in ls) {
+            this[declaration.name] = declaration;
+        }
+    }
+
+    public Context() : base() {}
+
     public dynamic this[string key] {
         get {
             try {
@@ -25,3 +33,10 @@ public class Context : Dictionary<string, dynamic> {
         return ret;
     }
 }
+
+public static class BestGuess {
+    public static int Expression = 1;
+    public static int Declaration = 2;
+    public static int BuiltinSugar = 3;
+}
+

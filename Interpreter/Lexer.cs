@@ -21,13 +21,19 @@ public class Lexer {
     };
     public static Dictionary<string, Func<int, int, Token>> RESERVED_KEYWORDS = new Dictionary<string, Func<int, int, Token>>{
         {"restore", Reserved(Tokens.RESTORE)},
-        {"draw", Reserved(Tokens.DRAW)}, // TODO construir estos tokens
-        {"undefined", Reserved(Tokens.UNDEFINED)},
+        {"draw", Reserved(Tokens.DRAW)},
+        {"color", Reserved(Tokens.COLOR)},
         {"if", Reserved(Tokens.IF)},
         {"else", Reserved(Tokens.ELSE)},
         {"then", Reserved(Tokens.THEN)},
         {"let", Reserved(Tokens.LET)},
         {"in", Reserved(Tokens.IN)},
+    };
+
+    public static HashSet<string> HARD_CODED_BUILTINS = new HashSet<string> {
+        Tokens.RESTORE,
+        Tokens.DRAW,
+        Tokens.COLOR,
     };
 
     public static Func<int, int, Token> Reserved(string name) {
@@ -62,12 +68,13 @@ public class Lexer {
     }
 
     public static bool IsAlpha(string s) {
-        string pattern = @"[A-Za-z]";
+        // alpha or "_" actually
+        string pattern = @"[A-Za-z_]";
         return Regex.Match(s, pattern).Success;
     }
 
     public static bool IsAlnum(string s) {
-        string pattern = @"[A-Za-z0-9]";
+        string pattern = @"[A-Za-z0-9_]";
         return Regex.Match(s, pattern).Success;
     }
 
@@ -177,7 +184,7 @@ public class Lexer {
 
             if (IsDigit(this.current_char)) {
                 Token num = this.Number();
-                if (this.current_char == "_" || IsAlpha(this.current_char)) {
+                if (IsAlpha(this.current_char)) {
                     this.Error(new LexingError("Invalid numeric literal"));
                 }
 

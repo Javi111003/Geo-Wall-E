@@ -5,27 +5,7 @@ public class Interpreter {
     public Context GLOBAL_SCOPE = new Context();
     public Parser parser;
     public AST _tree;
-    public BlockNode BUILTINS = new BlockNode(
-        new List<AST>{
-            new Print(),
-            new Cos(),
-            new Sin(),
-            new Log(),
-            new True(),
-            new False(),
-            new PointDecl(),
-            new LineDecl(),
-            new SegmentDecl(),
-            new RayDecl(),
-            new CircleDecl(),
-            new ArcDecl(),
-            new IntersectDecl(),
-            new CountDecl(),
-            new RandomsDecl(),
-            new PointsDecl(),
-            new SamplesDecl()
-        }
-    );
+    public static BlockNode BUILTINS = new BlockNode(Parser.BUILTINS);
 
     public Interpreter(Parser parser) {
         this.parser = parser;

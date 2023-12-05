@@ -73,4 +73,16 @@ public class TestParser
     public void TestFunctionTypeCheck() {
         Assert.Throws<TypeError>(delegate {this.Prepare("a() = 1 + \"\";");});
     }
+
+    [Fact]
+    public void TestUndefined() {
+        var result = (BlockNode) this.Prepare("undefined;");
+        Assert.Equal(AST<object>.SEQUENCE, result.blocks[0].Type);
+    }
+
+    [Fact]
+    public void TestBuiltinsTypes() {
+        // long-awaited test
+        Assert.Throws<TypeError>(delegate {this.Prepare("log(2) + \"\";");});
+    }
 }
