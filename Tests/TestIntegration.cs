@@ -15,8 +15,8 @@ public class TestIntegration
     ).Parent.Parent.Parent.Parent;
 
     public Interpreter.Interpreter _Prepare(string text) {
-        Lexer lexer = new Lexer(text);
-        Parser parser = new Parser(lexer);
+        Lexer lexer = new Lexer(text, debug:true);
+        Parser parser = new Parser(lexer, debug:true);
 
         return new Interpreter.Interpreter(parser);
     }
@@ -256,5 +256,93 @@ public class TestIntegration
         // runtime type checking
         var result = this._Interpret("a, b, c, rest = {1...}; c;");
         Assert.Equal(3, result);
+    }
+
+    [Fact]
+    public void TestPoint() {
+        var result = this._Interpret("point(0, 1);");
+        Assert.Equal(new Point(0, 1).ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void TestLine() {
+        var result = this._Interpret("p1 = point(0, 1);p2 = point(1, 0);line(p1, p2);");
+        Assert.Equal(new Line(new Point(0, 1), new Point(1, 0)).ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void TestSegment() {
+        var result = this._Interpret("p1 = point(0, 1);p2 = point(1, 0);segment(p1, p2);");
+        Assert.Equal(new Segment(new Point(0, 1), new Point(1, 0)).ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void TestRay() {
+        var result = this._Interpret("p1 = point(0, 1);p2 = point(1, 0);ray(p1, p2);");
+        Assert.Equal(new Ray(new Point(0, 1), new Point(1, 0)).ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void TestCircle() {
+        var result = this._Interpret("p1 = point(0, 1);r = 5;circle(p1, r);");
+        Assert.Equal(new Circle(new Point(0, 1), 5).ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void TestArc() {
+        var result = this._Interpret("p2 = point(0, 1); p3 = point(1, 0);center = point(0, 0);arc(center, p2, p3, 5);");
+        Assert.Equal(new Arc(new Point(0, 0), new Point(0, 1), new Point(1, 0), 5).ToString(), result.ToString());
+    }
+
+    [Fact]
+    public void TestIntersect() {
+        var result = this._Interpret("p1 = point(0, 1); p2 = point(1, 0);p3 = point(0, 0);intersect(line(p3, p1), line(p3, p2));");
+        Assert.Equal("{<Point(0, 0)>, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestCount() {
+        var result = this._Interpret("a, b, rest = {1,2,3,4,5};count(rest);");
+        Assert.Equal(3, result);
+    }
+
+    [Fact]
+    public void TestRandoms() {
+        var result = this._Interpret("count(randoms());");
+        Assert.Equal(100, result);
+    }
+
+    [Fact]
+    public void TestPoints() {
+        var result = this._Interpret("points(line(point(0,0), point(0,1)));");
+        Assert.Equal("{<Point(1, 1)>, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestSamples() {
+        var result = this._Interpret("count(samples(line(point(0,0), point(0,1))));");
+        Assert.Equal(100, result);
+    }
+
+    [Fact]
+    public void TestUnderscore() {
+        var result = this._Interpret("_;");
+        Assert.Equal("", result);
+    }
+
+    [Fact]
+    public void TestImport() {
+        var result = this._Interpret("import \"Constants.geo\"e;");
+        Assert.Equal((float) 2.7, (float) result);
+    }
+
+    [Fact]
+    public void TestCircularImport() {
+        var result = this._Interpret("import \"Circular.geo\"a;");
+        // NOTE in Circular2.geo we have "a = 7"
+        // import Circular.geo -> a = 5 -> import Circular2.geo -> a = 7 -> import Circular.geo -> a = 5
+        // the first Lexer(Circular.geo) doesn't know his own name
+        // so it can't skip importing himself at least once
+        Assert.Equal(5, result);
     }
 }

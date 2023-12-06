@@ -11,6 +11,13 @@ public class LexingError: Exception {
     public LexingError(string message, Exception inner): base(message, inner) {}
 }
 
+
+public class ImportError: Exception {
+    public ImportError() {}
+    public ImportError(string message): base(message) {}
+    public ImportError(string message, Exception inner): base(message, inner) {}
+}
+
 // parse
 
 public class NameError : Exception {
@@ -42,9 +49,3 @@ public class RuntimeError : Exception {
     public RuntimeError(string message): base(message) {}
     public RuntimeError(string message, Exception inner): base(message, inner) {}
 }
-
-public static class BestGuess {
-    public static int Expression = 1;
-    public static int Declaration = 2;
-}
-

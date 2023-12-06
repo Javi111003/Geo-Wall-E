@@ -1,4 +1,3 @@
-
 namespace Interpreter;
 
 // <In, Out>
@@ -23,6 +22,14 @@ public abstract class BinaryOperation<T, R>: AST<R> {
     }
 
     public override Exception Check() {
+        var cleft = this.left.Check();
+        if (cleft is not null) {
+            return cleft;
+        }
+        var cright = this.right.Check();
+        if (cright is not null) {
+            return cright;
+        }
         bool dynamic_expr = this.right.Type == AST<object>.DYNAMIC || this.left.Type == AST<object>.DYNAMIC;
         bool right_type = AST<object>.Compatible[this.Type].Contains(this.left.Type) && AST<object>.Compatible[this.Type].Contains(this.right.Type);
 
@@ -40,6 +47,7 @@ public abstract class BinaryOperation<T, R>: AST<R> {
 public class Sum : BinaryOperation<float, float> {
 
     public Sum(AST left, AST right): base(left, right) {}
+
    
     public override float Operation(float a, float b) {
         return a + b;
@@ -136,12 +144,6 @@ public abstract class UnaryOperation<T, R> : AST<R> {
 
     public AST block;
 
-    public override string Type {
-        get {
-            return this.block.Type;
-        }
-    }
-
     public UnaryOperation(AST block): base(AST<R>.ToStr()) {
         this.block = block;
     }
@@ -152,16 +154,16 @@ public abstract class UnaryOperation<T, R> : AST<R> {
 
     public abstract R Operation(T a);
 
-    public void Check() {
+    public override Exception Check() {
         bool dynamic_expr = this.block.Type == AST<object>.DYNAMIC;
-        bool right_type = this.block.Type == AST<R>.ToStr(typeof(R));
+        bool right_type = AST<object>.Compatible[AST<R>.ToStr(typeof(R))].Contains(this.block.Type);
 
         if ((dynamic_expr || right_type)) {
-            return;
+            return null;
         }
 
         string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {this.block.Type}";
-        throw new RuntimeError(msg);
+        throw new TypeError(msg);
     }
 }
 

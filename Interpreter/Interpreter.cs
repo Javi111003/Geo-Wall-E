@@ -5,11 +5,7 @@ public class Interpreter {
     public Context GLOBAL_SCOPE = new Context();
     public Parser parser;
     public AST _tree;
-    public BlockNode BUILTINS = new BlockNode(
-        new List<AST>{
-            new Print(), new Cos(), new Sin(), new Log(), new True(), new False()
-        }
-    );
+    public static BlockNode BUILTINS = new BlockNode(Parser.BUILTINS);
 
     public Interpreter(Parser parser) {
         this.parser = parser;
@@ -38,5 +34,16 @@ public class Interpreter {
             return "";
         }
         return eval;
+    }
+
+    public IEnumerator<dynamic> GetEnumerator() {
+        BlockNode tree = this.parser.Parse();
+        if (tree is null) {
+            yield return "";
+            yield break;
+        }
+        foreach(var ast in tree) {
+            yield return ast.Eval(this.GLOBAL_SCOPE);
+        }
     }
 }

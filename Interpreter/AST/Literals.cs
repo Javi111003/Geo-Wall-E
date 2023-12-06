@@ -2,10 +2,10 @@ using System.Text;
 
 namespace Interpreter;
 
-public abstract class Literal<T>: AST<T> {
+public class Literal<T>: AST<T> {
     protected T val;
 
-    public Literal(T val, string Type): base(Type){
+    public Literal(T val): base(AST<T>.ToStr()){
         this.val = val;
     }
 
@@ -22,22 +22,22 @@ public abstract class Literal<T>: AST<T> {
 
 public class StringLiteral: Literal<string> {
 
-    public StringLiteral(string val): base(val, AST<object>.STRING) {}
+    public StringLiteral(string val): base(val) {}
 }
 
 public class IntLiteral : Literal<int> {
 
-    public IntLiteral(int val): base(val, AST<object>.INTEGER) {}
+    public IntLiteral(int val): base(val) {}
 }
 
 public class FloatLiteral : Literal<float> {
 
-    public FloatLiteral(float val): base(val, AST<object>.FLOAT) {}
+    public FloatLiteral(float val): base(val) {}
 }
 
 public class BoolLiteral : Literal<bool> {
 
-    public BoolLiteral(bool val): base(val, AST<object>.BOOL) {}
+    public BoolLiteral(bool val): base(val) {}
 }
 
 // an IEnumerator but not an IEnumerator
@@ -129,6 +129,13 @@ public class Terms: AST {
         }
     }
 
+    public int Count() {
+        if (this.IsInfinite) {
+            return Int32.MaxValue;
+        }
+        return end - index - 1;
+    }
+
     public override Exception Check() {
         if (this.IsInfinite) {
             // INTEGER
@@ -175,7 +182,7 @@ public class Terms: AST {
 // block node... reimagined
 public class SequenceLiteral : Literal<Terms> {
 
-    public SequenceLiteral(Terms val): base(val, AST<object>.SEQUENCE) {}
+    public SequenceLiteral(Terms val): base(val) {}
 
     public SequenceLiteral Clone() {
         return new SequenceLiteral(this.val.Clone());
@@ -191,6 +198,11 @@ public class SequenceLiteral : Literal<Terms> {
 
     public override Exception Check() {
         return this.val.Check();
+    }
+
+    public IEnumerator<AST> GetEnumerator() {
+        // convenience method
+        return this.val.GetEnumerator();
     }
 }
 

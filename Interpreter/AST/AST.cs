@@ -1,4 +1,5 @@
 using System.Text;
+using System.Reflection;
 
 namespace Interpreter;
 
@@ -37,6 +38,12 @@ public class AST<T>: AST {
     public static string BOOL = "BOOL";
     public static string DYNAMIC = "DYNAMIC";
     public static string SEQUENCE = "SEQUENCE";
+    public static string POINT = "POINT";
+    public static string LINE = "LINE";
+    public static string SEGMENT = "SEGMENT";
+    public static string RAY = "RAY";
+    public static string CIRCLE = "CIRCLE";
+    public static string ARC = "ARC";
 
     public static HashSet<string> FloatOp = new HashSet<string>{FLOAT, INTEGER};
     public static HashSet<string> BoolOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING};
@@ -46,7 +53,7 @@ public class AST<T>: AST {
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
         {FLOAT, FloatOp},
         {INTEGER, FloatOp},
-        {BOOL, FloatOp},
+        {BOOL, BoolOp},
         {STRING, StrOp},
     };
 
@@ -59,16 +66,28 @@ public class AST<T>: AST {
         {BOOL, typeof(bool)},
         // can't typeof(dynamic)
         // this also means we don't care about the type (print)
-        {DYNAMIC, typeof(object)}
-        // not for SEQUENCE
+        {DYNAMIC, typeof(object)},
+        {SEQUENCE, typeof(Terms)},
+        {POINT, typeof(Point)},
+        {LINE, typeof(Line)},
+        {SEGMENT, typeof(Segment)},
+        {RAY, typeof(Ray)},
+        {ARC, typeof(Arc)}
     };
     public static Dictionary<Type, string> RevTypes = new Dictionary<Type, string>{
         {typeof(string), STRING},
         {typeof(int), INTEGER},
         {typeof(float), FLOAT},
         {typeof(bool), BOOL},
-        {typeof(object), DYNAMIC}
-        // no reverse search for typeof(object)
+        {typeof(object), DYNAMIC},
+        {typeof(Terms), SEQUENCE},
+        {typeof(SequenceLiteral), SEQUENCE},
+        {typeof(Point), POINT},
+        {typeof(Line), LINE},
+        {typeof(Segment), SEGMENT},
+        {typeof(Ray), RAY},
+        {typeof(Circle), CIRCLE},
+        {typeof(Arc), ARC}
     };
 
     public static string ToStr() {
@@ -182,6 +201,10 @@ public class BlockNode: AST {
         return null;
     }
 
+    public IEnumerator<AST> GetEnumerator() {
+        return this.blocks.GetEnumerator();
+    }
+
     public override string ToString() {
         return this.blocks.ToString();
     }
@@ -194,16 +217,40 @@ public class FunctionDeclaration: AST {
     public BlockNode args;
     public AST body;
 
-    public override string Type{
+    public override string Type {
         get {
             return this.body.Type;
         }
     }
 
-    public FunctionDeclaration(string name, BlockNode args, AST body) {
+    public FunctionDeclaration(string name, BlockNode args=null, AST body=null, int param_count=1) {
         this.name = name;
-        this.args = args;
-        this.body = body;
+        // defaults for builtins
+        if (args is null && body is null) {
+            var variables = new List<AST>();
+            for (int i = 0; i < param_count; i++) {
+                // a, b, ...
+                char var_name = (char) (97 + i);
+                variables.Add(new Variable(var_name.ToString()));
+            }
+            this.args = new BlockNode(variables);
+
+            string qualname = "Interpreter." + this.GetType().Name + "BlockNode";
+            Type type = System.Type.GetType(qualname);
+            if (type is null) {
+                throw new Exception($"{qualname} doesn't exist under this namespace");
+            }
+
+            this.body = (AST) Activator.CreateInstance(
+                  type: type,
+                  // we need to convert because the compilator complains otherwise
+                  args: variables.ToArray()
+            );
+        }
+        else {
+            this.args = args;
+            this.body = body;
+        }
     }
 
     public override dynamic Eval(Context ctx) {
@@ -258,7 +305,7 @@ public class Function : AST {
                 AST expression = this.args.blocks[i];
                 fun_ctx[variable.name] = expression.Eval(ctx);
             }
-            catch (Exception) {
+            catch (System.ArgumentOutOfRangeException) {
                 throw new RuntimeError($"Too many/few arguments for {this.name}");
             }
         }
