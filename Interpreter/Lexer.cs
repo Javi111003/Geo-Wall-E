@@ -278,7 +278,8 @@ public class Lexer {
                 // if it finished, the last is EOF
                 // NOTE due to compatibility issues with the REPL and friends
                 // we have to loop to remove EOF tokens (if any)
-                while (tokens[tokens.Count - 1].type == Tokens.EOF) {
+
+                while (tokens.Count > 0 && tokens[tokens.Count - 1].type == Tokens.EOF) {
                     tokens.RemoveAt(tokens.Count - 1);
                 }
             }

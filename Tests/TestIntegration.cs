@@ -335,4 +335,14 @@ public class TestIntegration
         var result = this._Interpret("import \"Constants.geo\"e;");
         Assert.Equal((float) 2.7, (float) result);
     }
+
+    [Fact]
+    public void TestCircularImport() {
+        var result = this._Interpret("import \"Circular.geo\"a;");
+        // NOTE in Circular2.geo we have "a = 7"
+        // import Circular.geo -> a = 5 -> import Circular2.geo -> a = 7 -> import Circular.geo -> a = 5
+        // the first Lexer(Circular.geo) doesn't know his own name
+        // so it can't skip importing himself at least once
+        Assert.Equal(5, result);
+    }
 }
