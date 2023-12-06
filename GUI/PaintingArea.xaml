@@ -1,0 +1,73 @@
+﻿<Window
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:WpfApp1"
+      xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls" x:Class="WpfApp1.PaintingArea"
+      mc:Ignorable="d" 
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="IsTimetoPaint"
+        Icon="C:\Users\javie\source\repos\WpfApp1\Images\posible_splash1.jpg">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="160"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Grid.Column="0" LastChildFill="False" Grid.Row="1">
+                <DockPanel.Background>
+                    <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                        <GradientStop Color="Black"/>
+                        <GradientStop Color="White" Offset="1"/>
+                    </LinearGradientBrush>
+                </DockPanel.Background>
+                <ToolBarPanel DockPanel.Dock="Left" Width="100">
+
+                    <ToolBar x:Name="Figures" Header="FIGURES">
+                        <Button Content="Segment" Click="DrawSegment"/>
+                        <Button Content="Circle" Click="DrawCircle"/>
+                        <Button Content="Arc" Click="DrawArc"/>
+                        <Button Content="Line" Click="DrawLine"/>
+                        <Button Content="Ray" Click="DrawRay"/>
+                        <Button Content="Point" Click="DrawPoint"/>
+                    </ToolBar>
+                    <Button Content="Clear" Click="ClearCanvas"></Button>
+                </ToolBarPanel>
+                <ToolBarPanel Width="100"/>
+                <mah:HamburgerMenu Grid.Column="0" Grid.Row="0" Content="Hola">
+                </mah:HamburgerMenu>
+            </DockPanel>
+            <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="35" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Opacity="0.6" VerticalAlignment="Bottom" Grid.IsSharedSizeScope="True" CanContentScroll="True">
+                <Canvas Name="MyCanvas" Width="2000" Height="2000" Grid.Column="1" Grid.Row="1">
+                    <Canvas.Background>
+                        <DrawingBrush TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
+                            <DrawingBrush.Drawing>
+                                <DrawingGroup>
+                                    <GeometryDrawing Brush="White">
+                                        <GeometryDrawing.Geometry>
+                                            <RectangleGeometry Rect="0,0,10,10"/>
+                                        </GeometryDrawing.Geometry>
+                                    </GeometryDrawing>
+                                    <GeometryDrawing Brush="Gray">
+                                        <GeometryDrawing.Geometry>
+                                            <EllipseGeometry Center="5,5" RadiusX="1" RadiusY="1"/>
+                                        </GeometryDrawing.Geometry>
+                                    </GeometryDrawing>
+                                </DrawingGroup>
+                            </DrawingBrush.Drawing>
+                        </DrawingBrush>
+                    </Canvas.Background>
+                </Canvas>
+            </ScrollViewer>
+        </Grid>
+
+
+    </Grid>
+</Window>
