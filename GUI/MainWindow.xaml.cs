@@ -33,21 +33,22 @@ namespace WpfApp1
             Status.Foreground = Brushes.Green;
         }
 
-        private void Build_Click(object sender, RoutedEventArgs e)
+        private void Build_Click(object sender, RoutedEventArgs e)//Boton para compilar
         {
-            HandlerUI.Code=myTextBox.Text;
+            HandlerUI handler = new HandlerUI(myTextBox.Text);
             Utils.ClearSerials();
             MessageBox.Show("the app is building");
             if (!STATUS) { Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes"; }
         }
 
         //Abrir area de dibujo
-        private void Run_Click(object sender, RoutedEventArgs e)
+        private void Run_Click(object sender, RoutedEventArgs e)//Boton para  dibujar
         {
             PaintingArea paintingArea = new PaintingArea();
             paintingArea.Show();
         }
-        //come back to the start
+
+        #region Lógica de Menú Archivo
         private void NewFile(object sender, RoutedEventArgs e)
         {
             // Limpia o reinicia el codigo
@@ -83,5 +84,6 @@ namespace WpfApp1
                 myTextBox.Text = File.ReadAllText(openFileDialog.FileName);
             }
         }
+        #endregion 
     }
 }

@@ -13,11 +13,11 @@ using System.Windows.Shapes;
 
 namespace WpfApp1
 {
-    public static class Utils//Encapsula metodos auxiliares
+    public static class Utils//Encapsula métodos auxiliares
     {
         public static Stack<Brush> COLORS = new Stack<Brush>();
 
-        public static Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar interseccion entre dos Geometrys
+        public static Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
             Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
             Geometry og2 = g2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
@@ -33,7 +33,7 @@ namespace WpfApp1
             }
             return result;
         }
-        public static Geometry PointToGeometry(Point point)//poder tartar los puntos como figuras geometricas interceptables y dibujables
+        public static Geometry PointToGeometry(Point point)//poder tartar los puntos como figuras geométricas interceptables y dibujables
         {
             EllipseGeometry representation = new EllipseGeometry();
             representation.Center = point;
@@ -67,14 +67,14 @@ namespace WpfApp1
             }
 
         }
-        public static void RestoreColor()//go backward in colors
+        public static void RestoreColor()//go backward de colors
         {
             if (COLORS.Count > 1)
             {
                 COLORS.Pop();
             }
         }
-        public static IEnumerable<Point> Points(Geometry figure)//puntos aleatorios de f(figure)
+        public static IEnumerable<Point> Points(Geometry figure)//puntos aleatorios de figure
         {
             if (figure is LineGeometry line)
             {
@@ -94,7 +94,7 @@ namespace WpfApp1
             }
             else if (figure is EllipseGeometry circle) //Es un circulo
             {
-                if (circle.RadiusX == 4.99)//Descartar que sea la representacion geometrica de un punto
+                if (circle.RadiusX == 4.99)//Descartar que sea la representación geométrica de un punto
                 {
                     yield return circle.Center;
                 }
@@ -104,7 +104,7 @@ namespace WpfApp1
                    {
                         double angle = Random.Shared.NextDouble() * 2 * Math.PI; // Genera un ángulo aleatorio entre 0 y 2π
                         double x = circle.Center.X + circle.RadiusX * Math.Cos(angle); // Calcula la coordenada x del punto
-                        double y = circle.Center.Y + circle.RadiusX * Math.Sin(angle); // 
+                        double y = circle.Center.Y + circle.RadiusX * Math.Sin(angle); // Calcula la coordenada y del punto
                         yield return new Point(x, y);
                    }
                 }
@@ -150,7 +150,7 @@ namespace WpfApp1
                 myCanvas.Children.Add(path);
             }
         }
-        public static void ClearSerials()//eliminar los archivos de el anterior Run
+        public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
             string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\GUI\\Serials\\";
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
