@@ -329,4 +329,10 @@ public class TestIntegration
         var result = this._Interpret("_;");
         Assert.Equal("", result);
     }
+
+    [Fact]
+    public void TestImport() {
+        var result = this._Interpret("import \"Constants.geo\"e;");
+        Assert.Equal((float) 2.7, (float) result);
+    }
 }

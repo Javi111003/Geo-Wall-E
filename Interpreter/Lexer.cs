@@ -28,6 +28,7 @@ public class Lexer {
         {"then", Reserved(Tokens.THEN)},
         {"let", Reserved(Tokens.LET)},
         {"in", Reserved(Tokens.IN)},
+        {"import", Reserved(Tokens.IMPORT)}
     };
 
     public static HashSet<string> HARD_CODED_BUILTINS = new HashSet<string> {
@@ -36,17 +37,44 @@ public class Lexer {
         Tokens.COLOR,
     };
 
-    public static Func<int, int, Token> Reserved(string name) {
-        return (int Line, int column) => new Token(name, null, Line, column);
-    }
+    public HashSet<string> Imported;
 
-    public Lexer(string Text) {
+    public Lexer(string Text, HashSet<string> already_imported=null) {
         this.Text = Text;
         this.pos = 0;
         this.current_char = this.Text[this.pos].ToString();
 
         this.Line = 1;
         this.column = 1;
+
+        if (already_imported is null) {
+            this.Imported = new HashSet<string>();
+        }
+        else {
+            // not a copy
+            this.Imported = already_imported;
+        }
+    }
+
+    public static Func<int, int, Token> Reserved(string name) {
+        return (int Line, int column) => new Token(name, null, Line, column);
+    }
+
+    public string TextFrom(string name) {
+        if (this.Imported.Contains(name)) {
+            return null;
+        }
+
+        foreach(var path in Settings.GSHARPATH) {
+            FileInfo full_path = new FileInfo(Path.Join(path.ToString(), name));
+            if (full_path.Exists) {
+                string text = File.ReadAllText(full_path.ToString());
+                return text;
+            }
+        }
+
+        this.Error(new ImportError(name));
+        return null;
     }
 
     public void Error(Exception exception) {
@@ -224,12 +252,41 @@ public class Lexer {
     }
     public Token[] GetAllTokens()
     {
-        List<Token>tokens = new List<Token>();
+        List<Token> tokens = new List<Token>();
         while (this.current_char != "") {
-            tokens.Add(GetNextToken());
+            var token = this.GetNextToken();
+            if (token.type == Tokens.IMPORT) {
+                // i don't really care if it's a number, a reserved word, ...
+                token = this.GetNextToken();
+                if (token.type != Tokens.STRING) {
+                    this.Error(new SyntaxError("Invalid syntax. 'import' must be followed by a string"));
+                }
+                string name = token.val;
+                string module_code = this.TextFrom(name);
+                if (module_code is null) {
+                    // already imported
+                    continue;
+                }
+
+                this.Imported.Add(name);
+
+                // we pass a reference to "Imported"
+                // we want to modify it so a module imported by a child
+                // is not imported again by the father
+                tokens.AddRange(new Lexer(module_code, this.Imported).GetAllTokens());
+                // pop EOF
+                // if it finished, the last is EOF
+                // NOTE due to compatibility issues with the REPL and friends
+                // we have to loop to remove EOF tokens (if any)
+                while (tokens[tokens.Count - 1].type == Tokens.EOF) {
+                    tokens.RemoveAt(tokens.Count - 1);
+                }
+            }
+            else {
+                tokens.Add(token);
+            }
         }
-        // add EOF
-        tokens.Add(new Token(Tokens.EOF, null, this.Line, this.column));
+        tokens.Add(new Token(Tokens.EOF));
         return tokens.ToArray();
     }
 }

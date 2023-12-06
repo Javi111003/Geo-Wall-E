@@ -1,3 +1,5 @@
+using System.IO;
+using System.Reflection;
 
 namespace Interpreter;
 
@@ -40,3 +42,15 @@ public static class BestGuess {
     public static int BuiltinSugar = 3;
 }
 
+static class Settings {
+
+    public static DirectoryInfo BASE_DIR = new DirectoryInfo(
+        Assembly.GetAssembly(typeof (Interpreter)).Location
+    ).Parent.Parent.Parent.Parent.Parent;
+
+    public static DirectoryInfo PWD = new DirectoryInfo(Directory.GetCurrentDirectory());
+
+    public static DirectoryInfo APP_DIR = new DirectoryInfo(Path.Join(BASE_DIR.ToString(), "Libraries"));
+
+    public static DirectoryInfo[] GSHARPATH = new DirectoryInfo[3]{PWD, APP_DIR, BASE_DIR};
+}

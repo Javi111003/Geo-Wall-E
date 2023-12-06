@@ -35,6 +35,7 @@ public static class Tokens {
     public static string IF = "if";
     public static string LET = "let";
     public static string IN = "in";
+    public static string IMPORT = "import";
     public static string QUOTATION = "\"";
     public static string COMMA = ",";
     public static string NOT = "!";
