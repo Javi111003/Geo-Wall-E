@@ -39,13 +39,20 @@ public class Lexer {
 
     public HashSet<string> Imported;
 
-    public Lexer(string Text, HashSet<string> already_imported=null) {
+    public string LastLine;
+    public (string, string) LastError;
+
+    private bool debug;
+
+    public Lexer(string Text, HashSet<string> already_imported=null, bool debug=false) {
         this.Text = Text;
         this.pos = 0;
         this.current_char = this.Text[this.pos].ToString();
 
         this.Line = 1;
         this.column = 1;
+
+        this.LastLine = "";
 
         if (already_imported is null) {
             this.Imported = new HashSet<string>();
@@ -54,6 +61,9 @@ public class Lexer {
             // not a copy
             this.Imported = already_imported;
         }
+
+        this.debug = debug;
+        this.LastError = (null, null);
     }
 
     public static Func<int, int, Token> Reserved(string name) {
@@ -77,16 +87,27 @@ public class Lexer {
         return null;
     }
 
-    public void Error(Exception exception) {
-        Console.WriteLine(
-            "Error lexing line " + this.Line.ToString() + " col " + (string) this.column.ToString()
-        );
-        Console.WriteLine(this.Text);
-        for (int i = 0; i < this.column - 1; i++) {
-            Console.Write(" ");
+   public string ErrorMessage() {
+        string msg = $"Error parsing line {this.Line} col {this.column}";
+        msg += '\n'.ToString();
+        msg += this.LastLine;
+        msg += '\n'.ToString();
+        for (int i = 0; i < this.column - 2; i++) {
+            msg += " "; 
         }
-        Console.Write("^");
-        Console.WriteLine();
+        msg += "^";
+        msg += '\n'.ToString();
+
+        return msg;
+   }
+
+    public void Error(Exception exception) {
+        string msg = this.ErrorMessage();
+
+        this.LastError = (exception.ToString(), msg);
+
+        Console.WriteLine(msg);
+
         throw exception;
    }
 
@@ -122,9 +143,12 @@ public class Lexer {
     public void Advance() {
         // it's a string
         if (this.current_char != "" && this.current_char[0] == '\n') {
+            this.LastLine = "";
             this.Line += 1;
             this.column = 0;
         }
+        // track last line to get nicer errors
+        this.LastLine += this.current_char;
         this.pos += 1;
         this.column += 1;
         if (this.pos > this.Text.Length - 1) {
@@ -250,7 +274,7 @@ public class Lexer {
         }
         return new Token(Tokens.EOF, null, this.Line, this.column);
     }
-    public Token[] GetAllTokens()
+    private Token[] FetchAllTokens()
     {
         List<Token> tokens = new List<Token>();
         while (this.current_char != "") {
@@ -289,5 +313,20 @@ public class Lexer {
         }
         tokens.Add(new Token(Tokens.EOF));
         return tokens.ToArray();
+    }
+
+    public Token[] GetAllTokens() {
+        Token[] tokens = null;
+        try {
+            tokens = this.FetchAllTokens();
+        }
+        catch (Exception e){
+            this.LastError = (e.ToString(), this.ErrorMessage());
+            if (this.debug) {
+                throw e;
+            }
+            return null;
+        }
+        return tokens;
     }
 }

@@ -15,8 +15,8 @@ public class TestIntegration
     ).Parent.Parent.Parent.Parent;
 
     public Interpreter.Interpreter _Prepare(string text) {
-        Lexer lexer = new Lexer(text);
-        Parser parser = new Parser(lexer);
+        Lexer lexer = new Lexer(text, debug:true);
+        Parser parser = new Parser(lexer, debug:true);
 
         return new Interpreter.Interpreter(parser);
     }

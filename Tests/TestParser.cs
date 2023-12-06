@@ -7,8 +7,8 @@ namespace Tests;
 public class TestParser
 {
     public AST Prepare(string text) {
-        Lexer lexer = new Lexer(text);
-        Parser parser = new Parser(lexer);
+        Lexer lexer = new Lexer(text, debug:true);
+        Parser parser = new Parser(lexer, debug:true);
 
         return parser.Parse();
     }
@@ -84,5 +84,17 @@ public class TestParser
     public void TestBuiltinsTypes() {
         // long-awaited test
         Assert.Throws<TypeError>(delegate {this.Prepare("log(2) + \"\";");});
+    }
+
+    [Fact]
+    public void TestOperatorCheckPropagation() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("1 + \"\" + 1;");});
+    }
+    public void TestOperatorCheckPropagation2() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("1 + 1 + \"\";");});
+    }
+
+    public void TestOperatorCheckPropagation3() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("-\"\";");});
     }
 }

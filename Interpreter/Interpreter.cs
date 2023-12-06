@@ -35,4 +35,15 @@ public class Interpreter {
         }
         return eval;
     }
+
+    public IEnumerator<dynamic> GetEnumerator() {
+        BlockNode tree = this.parser.Parse();
+        if (tree is null) {
+            yield return "";
+            yield break;
+        }
+        foreach(var ast in tree) {
+            yield return ast.Eval(this.GLOBAL_SCOPE);
+        }
+    }
 }

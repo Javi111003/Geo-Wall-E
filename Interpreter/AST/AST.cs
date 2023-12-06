@@ -53,7 +53,7 @@ public class AST<T>: AST {
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
         {FLOAT, FloatOp},
         {INTEGER, FloatOp},
-        {BOOL, FloatOp},
+        {BOOL, BoolOp},
         {STRING, StrOp},
     };
 

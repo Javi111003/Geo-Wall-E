@@ -39,8 +39,13 @@ public class Parser {
         new RestoreDecl(),
     };
 
+    // serialize errors
 
-    public Parser(Lexer lexer, Context context = null) {
+    public (string, string) LastError;
+
+    private bool debug;
+
+    public Parser(Lexer lexer, Context context = null, bool debug = false) {
         this.index = 0;
         this.lexer = lexer;
         this.tokens = this.lexer.GetAllTokens();
@@ -53,6 +58,10 @@ public class Parser {
         else {
             this.global_context = this.local_context = context;
         }
+
+        // wheter to throw errors or not
+        this.debug = debug;
+        this.LastError = (null, null);
     }
 
     public Token GetNextToken() {
@@ -74,15 +83,25 @@ public class Parser {
        return this.tokens[this.index + steps];
    }
 
-    public void Error(Exception exception) {
-        Console.WriteLine($"Error parsing line {this.current_token.Line} col {this.current_token.column}");
-        // XXX write last line
-        Console.WriteLine(this.lexer.Text);
+   public string ErrorMessage() {
+        string msg = $"Error parsing line {this.current_token.Line} col {this.current_token.column}";
+        msg += '\n'.ToString();
+        msg += this.lexer.LastLine;
+        msg += '\n'.ToString();
         for (int i = 0; i < this.current_token.column - 2; i++) {
-            Console.Write(" "); 
+            msg += " "; 
         }
-        Console.Write("^");
-        Console.WriteLine(); 
+        msg += "^";
+        msg += '\n'.ToString();
+
+        return msg;
+   }
+
+    public void Error(Exception exception) {
+        string msg = this.ErrorMessage();
+        this.LastError = (exception.ToString(), msg);
+
+        Console.WriteLine(msg);
         throw exception;
     }
 
@@ -655,7 +674,7 @@ public class Parser {
             this.Error(new SyntaxError("Expected ';'"));
         }
 
-        if (!(node is null)) {
+        if (node is not null) {
             Exception? exc = node.Check();
             if (!(exc is null)) {
                 this.Error(exc);
@@ -665,12 +684,24 @@ public class Parser {
         return node;
     }
 
-    public AST Parse() {
+    public BlockNode Parse() {
         List<AST> nodes = new List<AST>();
         AST node = null;
 
         while (this.current_token.type != Tokens.EOF) {
-            node = this.ParseNode();
+            try {
+                node = this.ParseNode();
+            }
+            catch (Exception e) {
+                if (this.LastError.Item1 is null) {
+                    this.LastError = (e.ToString(), this.ErrorMessage());
+                }
+                throw e;
+                if (this.debug) {
+                    throw e;
+                }
+                return null;
+            }
             this.Eat(Tokens.END);
             nodes.Add(node);
         }
