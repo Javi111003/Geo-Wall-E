@@ -60,7 +60,7 @@ namespace Interpreter
 
 
         #region Envío de órdenes de dibujo y parámetros normalizados al Drawer
-        public static void Draw(Dictionary<string, dynamic> figure)
+        public static void Draw(Dictionary<string, dynamic> figure, string label)
         {
             string type = figure["type"];
             switch (type)

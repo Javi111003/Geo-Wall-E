@@ -39,6 +39,7 @@ public class Parser {
         new ColorDecl(),
         new RestoreDecl(),
         new MeasureDecl(),
+        new DrawDecl(),
     };
 
     // serialize errors
@@ -659,7 +660,13 @@ public class Parser {
             this.Eat(Tokens.DRAW);
             var args = this.Expr();
             // string
-            AST label = this.LiteralNode();
+            AST label = new AST();
+            try {
+                label = this.LiteralNode();
+            }
+            catch {
+                
+            }
             return this.FunctionCall(name, new BlockNode(new List<AST>{args, label}));
         }
         else if (name == "color") {
@@ -759,7 +766,6 @@ public class Parser {
                 if (this.LastError.Item1 is null) {
                     this.LastError = (e.ToString(), this.ErrorMessage());
                 }
-                throw e;
                 if (this.debug) {
                     throw e;
                 }

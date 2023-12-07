@@ -326,6 +326,28 @@ namespace Interpreter {
         ) {}
     }
 
+    // draw
+    class DrawDeclBlockNode : UnaryOperation<Drawable, object> {
+        AST label;
+
+        public DrawDeclBlockNode(AST seq, AST label) : base(seq) {
+            this.label = label;
+        }
+
+        public override object Operation(Drawable fig) {
+            HandlerUI.Draw(fig.GetDrawParams(), this.label.ToString());
+            return null;
+        }
+    }
+
+    class DrawDecl : FunctionDeclaration {
+
+        public DrawDecl() : base(
+            "draw",
+            param_count:2
+        ) {}
+    }
+
     // measure
     class MeasureDeclBlockNode : GenDeclBlockNode<Drawable, int> {
 
