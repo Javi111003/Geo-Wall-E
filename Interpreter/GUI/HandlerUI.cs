@@ -23,14 +23,41 @@ namespace Interpreter
         }
         public string Code { get; set; }
 
-        public static int Measure(Point p1, Point p2)//medida entre dos puntos 
+        public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//medida entre dos puntos 
         {
-            return Utils.Measure(p1, p2);
+            // FIXME
+            //return Utils.Measure(p1, p2);
+            return -1;
         }
-        public static Point[] Intersection(Geometry fig1, Geometry fig2)//intersect
+
+        public static IEnumerable<Dictionary<string, dynamic>> Intersection(Dictionary<string, dynamic> fig1, Dictionary<string, dynamic> fig2)//intersect
         {
-            return Utils.GetIntersectionPoints(fig1, fig2);
+            // FIXME
+            //return Utils.GetIntersectionPoints(fig1, fig2);
+            yield return GetPoint();
         }
+
+        public static IEnumerable<Dictionary<string, dynamic>> Points(Dictionary<string, dynamic> fig1) // points from a figure
+        {
+            // FIXME
+            //return Utils.GetIntersectionPoints(fig1, fig2);
+            yield return GetPoint();
+        }
+
+        public static void Color() // random points
+        {
+            // FIXME
+            //return Utils.GetIntersectionPoints(fig1, fig2);
+            return;
+        }
+
+        public static void Restore()
+        {
+            // FIXME
+            //return Utils.GetIntersectionPoints(fig1, fig2);
+            return;
+        }
+
 
         #region Envío de órdenes de dibujo y parámetros normalizados al Drawer
         public static void Draw(Dictionary<string, dynamic> figure)

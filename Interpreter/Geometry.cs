@@ -3,11 +3,8 @@ using Interpreter;
 
 namespace Interpreter {
 
-    public class DrawParams : Dictionary<string, dynamic> {
-    }
-
     interface Drawable {
-        public DrawParams GetDrawParams();
+        public Dictionary<string, dynamic> GetDrawParams();
     }
 
     // binary operation because we already have type checking defined for it
@@ -44,8 +41,18 @@ namespace Interpreter {
                 this.y = y;
             }
 
-            public DrawParams GetDrawParams() {
-                return new DrawParams {
+            public Point(Dictionary<string, dynamic> metadata) {
+                string name = this.GetType().Name.ToLower();
+                if (metadata["type"] != name) {
+                     throw new Exception($"Expected type {name} found {metadata["type"]}");
+                }
+                var param = metadata["params"];
+                this.x = param["x"];
+                this.y = param["y"];
+            }
+
+            public Dictionary<string, dynamic> GetDrawParams() {
+                return new Dictionary<string, dynamic> {
                     {"type", this.GetType().Name.ToLower()},
                     {"params", new Dictionary<string, float>{{"x", this.x}, {"y", this.y}}}
                 };
@@ -65,12 +72,22 @@ namespace Interpreter {
                 this.p2 = p2;
             }
 
-            public DrawParams GetDrawParams() {
-                return new DrawParams {
+            public Line(Dictionary<string, dynamic> metadata) {
+                string name = this.GetType().Name.ToLower();
+                if (metadata["type"] != name) {
+                     throw new Exception($"Expected type {name} found {metadata["type"]}");
+                }
+                var param = metadata["params"];
+                this.p1 = new Point(param["p1"]);
+                this.p2 = new Point(param["p2"]);
+            }
+
+            public Dictionary<string, dynamic> GetDrawParams() {
+                return new Dictionary<string, dynamic> {
                     {"type", this.GetType().Name.ToLower()},
-                    {"params", new Dictionary<string, Point>{
-                        {"p1", this.p1},
-                        {"p2", this.p2}
+                    {"params", new Dictionary<string, dynamic>{
+                        {"p1", this.p1.GetDrawParams()},
+                        {"p2", this.p2.GetDrawParams()}
                     }}
                 };
             }
@@ -83,11 +100,13 @@ namespace Interpreter {
         public class Segment : Line {
 
             public Segment(Point p1, Point p2) : base(p1, p2) {}
+            public Segment(Dictionary<string, dynamic> metadata) : base(metadata) {}
         }
 
         public class Ray : Line {
 
             public Ray(Point p1, Point p2) : base(p1, p2) {}
+            public Ray(Dictionary<string, dynamic> metadata) : base(metadata) {}
         }
 
         public class Circle : Drawable {
@@ -99,10 +118,20 @@ namespace Interpreter {
                 this.radius = radius;
             }
 
-            public DrawParams GetDrawParams() {
-                return new DrawParams {
+            public Circle(Dictionary<string, dynamic> metadata) {
+                string name = this.GetType().Name.ToLower();
+                if (metadata["type"] != name) {
+                     throw new Exception($"Expected type {name} found {metadata["type"]}");
+                }
+                var param = metadata["params"];
+                this.center = new Point(param["center"]);
+                this.radius =  param["radius"];
+            }
+
+            public Dictionary<string, dynamic> GetDrawParams() {
+                return new Dictionary<string, dynamic> {
                     {"type", this.GetType().Name.ToLower()},
-                    {"params", new Dictionary<string, dynamic>{{"center", this.center}, {"radius", this.radius}}}
+                    {"params", new Dictionary<string, dynamic>{{"center", this.center.GetDrawParams()}, {"radius", this.radius}}}
                 };
             }
 
@@ -126,13 +155,25 @@ namespace Interpreter {
                 this.measure = measure;
             }
 
-            public DrawParams GetDrawParams() {
-                return new DrawParams {
+            public Arc(Dictionary<string, dynamic> metadata) {
+                string name = this.GetType().Name.ToLower();
+                if (metadata["type"] != name) {
+                     throw new Exception($"Expected type {name} found {metadata["type"]}");
+                }
+                var param = metadata["params"];
+                this.center = new Point(param["center"]);
+                this.p2 = new Point(param["p2"]);
+                this.p3 = new Point(param["p3"]);
+                this.measure =  param["measure"];
+            }
+
+            public Dictionary<string, dynamic> GetDrawParams() {
+                return new Dictionary<string, dynamic> {
                     {"type", this.GetType().Name.ToLower()},
                     {"params", new Dictionary<string, dynamic>{
-                        {"center", this.center},
-                        {"p2", this.p2},
-                        {"p3", this.p3},
+                        {"center", this.center.GetDrawParams()},
+                        {"p2", this.p2.GetDrawParams()},
+                        {"p3", this.p3.GetDrawParams()},
                         {"measure", this.measure}
                     }}
                 };
@@ -259,22 +300,47 @@ namespace Interpreter {
         public IntersectDeclBlockNode(AST f1, AST f2) : base(f1, f2) {}
 
         public override SequenceLiteral Operation(Drawable f1, Drawable f2) {
-            // XXX call handler
+            var ls = new List<AST>();
+            foreach(
+                Dictionary<string, dynamic> point in HandlerUI.Intersection(f1.GetDrawParams(), f2.GetDrawParams())
+            ) {
+                ls.Add(new Literal<Figures.Point>(new Figures.Point((Dictionary<string, dynamic>) point)));
+            }
+
             return new SequenceLiteral(
                 new Terms(
                     // static typing and its consequences have been a disaster for the human race
-                    (List<AST>) new List<AST>{
-                        new Literal<Figures.Point>(new Figures.Point(0, 0))
-                    }
+                    ls
                 )
              );
         }
     }
 
+
+
     class IntersectDecl : FunctionDeclaration {
 
         public IntersectDecl() : base(
             "intersect",
+            param_count:2
+        ) {}
+    }
+
+    // measure
+    class MeasureDeclBlockNode : GenDeclBlockNode<Drawable, int> {
+
+        public MeasureDeclBlockNode(AST f1, AST f2) : base(f1, f2) {}
+
+        public override int Operation(Drawable f1, Drawable f2) {
+            // XXX call handler
+            return HandlerUI.Measure(f1.GetDrawParams(), f2.GetDrawParams());
+        }
+    }
+
+    class MeasureDecl : FunctionDeclaration {
+
+        public MeasureDecl() : base(
+            "measure",
             param_count:2
         ) {}
     }
@@ -325,13 +391,16 @@ namespace Interpreter {
         public PointsDeclBlockNode(AST f1) : base(f1) {}
 
         public override SequenceLiteral Operation(Drawable f1) {
-            // XXX call handler
+            var ls = new List<AST>();
+            foreach(
+                Dictionary<string, dynamic> point in HandlerUI.Points(f1.GetDrawParams())
+            ) {
+                ls.Add(new Literal<Figures.Point>(new Figures.Point((Dictionary<string, dynamic>) point)));
+            }
+
             return new SequenceLiteral(
                 new Terms(
-                    // static typing and its consequences have been a disaster for the human race
-                    (List<AST>) new List<AST>{
-                        new Literal<Figures.Point>(new Figures.Point(1, 1))
-                    }
+                    ls
                 )
              );
         }
@@ -353,7 +422,11 @@ namespace Interpreter {
             Random rand = new Random();
             var ls = new List<AST>();
             for(int i = 0; i < 100; i++) {
-                ls.Add((AST) new Literal<Figures.Point>(new Figures.Point(0,0)));
+                ls.Add((AST) new Literal<Figures.Point>(
+                    new Figures.Point(
+                        rand.Next(0, 1000), rand.Next(0, 100)
+                    )
+                ));
             }
             return new SequenceLiteral(new Terms(ls));
         }
@@ -372,7 +445,7 @@ namespace Interpreter {
         public ColorDeclBlockNode(AST f1) : base(f1) {}
 
         public override object Operation(string f1) {
-            // XXX call handler
+            HandlerUI.Color();
             return null;
         }
     }
@@ -390,7 +463,7 @@ namespace Interpreter {
         public RestoreDeclBlockNode() : base(AST<object>.ToStr()) {}
 
         public override dynamic Eval(Context ctx) {
-            // XXX call handler
+            HandlerUI.Color();
             return null;
         }
     }

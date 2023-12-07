@@ -38,6 +38,7 @@ public class Parser {
         new SamplesDecl(),
         new ColorDecl(),
         new RestoreDecl(),
+        new MeasureDecl(),
     };
 
     // serialize errors
@@ -196,6 +197,67 @@ public class Parser {
         return node;
     }
 
+    public List<AST> ToArgs(string type) {
+        // convert from **kwargs to *args
+        if (type == "point") {
+            var metadata = HandlerUI.GetPoint();
+            var param = metadata["params"];
+
+            return new List<AST>{
+                new FloatLiteral(param["x"]), 
+                new FloatLiteral(param["y"])
+            };
+        }
+        else if (new HashSet<string>{"line", "ray", "segment"}.Contains(type)) {
+            var metadata = HandlerUI.GetLine();
+            var param = metadata["params"];
+
+            return new List<AST>{
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p1"])
+                 ),
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p1"])
+                )
+            };
+        }
+        else if (type == "circle") {
+            var metadata = HandlerUI.GetCircle();
+            var param = metadata["circle"];
+
+            return new List<AST>{
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["center"])
+                 ),
+                new IntLiteral(
+                    param["radius"]
+                )
+            };
+        }
+        else if (type == "arc") {
+            var metadata = HandlerUI.GetArc();
+            var param = metadata["arc"];
+            return new List<AST>{
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["center"])
+                 ),
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p2"])
+                 ),
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p3"])
+                ),
+                new IntLiteral(
+                    param["measure"]
+                )
+            };
+        }
+        else {
+            Console.WriteLine($"WARNING: Could not determine type for {type}");
+            return new List<AST>();
+        }
+    }
+
     protected (string, string?) DeclareFirst(List<AST> variables, List<string> names) {
         // helper function to declare a variable
         // the first time it can have a type before the name 
@@ -231,11 +293,11 @@ public class Parser {
             // [type] [name]; is translated to name = type()
             // where type is a function
             // thus
-            // XXX call handla
+            //
 
             Function fun = this.FunctionCall(
                 type,
-                new BlockNode(new List<AST>{new IntLiteral(0), new IntLiteral(0)})
+                new BlockNode(this.ToArgs(type))
             );
             val = fun;
 

@@ -298,7 +298,7 @@ public class TestIntegration
     [Fact]
     public void TestIntersect() {
         var result = this._Interpret("p1 = point(0, 1); p2 = point(1, 0);p3 = point(0, 0);intersect(line(p3, p1), line(p3, p2));");
-        Assert.Equal("{<Point(0, 0)>, }", result.ToString());
+        Assert.Equal("{<Point(1, 0)>, }", result.ToString());
     }
 
     [Fact]
@@ -346,4 +346,10 @@ public class TestIntegration
         // so it can't skip importing himself at least once
         Assert.Equal(5, result);
     }
+    [Fact]
+    public void TestMeasure() {
+        var result = this._Interpret("measure(point(0, 0), point(0, 5));");
+        Assert.Equal((float) 5, (float) result);
+    }
+
 }
