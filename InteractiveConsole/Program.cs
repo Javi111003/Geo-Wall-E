@@ -2,32 +2,32 @@ using System;
 
 using Interpreter;
 
-class Massa {
+class Master {
     static string msg = "H.U.L.K. REPL\nInterpreter version: 0.0.0\nREPL version: 0.0.0\n";
     
     public static void Main(string[] args) {
-	Lexer l = null;
-	Parser p = null;
-	Interpreter.Interpreter i = null;
+	Lexer lexer = null;
+	Parser parser = null;
+	Interpreter.Interpreter interpreter = null;
 	try {
 	    Console.Write(msg);
-	    l = new Lexer(";");
-	    p = new Parser(l);
-	    i = new Interpreter.Interpreter(p);
+	    lexer = new Lexer(";");
+	    parser = new Parser(lexer);
+	    interpreter = new Interpreter.Interpreter(parser);
 	}
 	catch (Exception e) {
 	    Console.WriteLine(e);
 	    return;
 	}
-    Context c = p.global_context;
+    Context context = parser.global_context;
     while (true) {
         Console.Write(">>> ");
         
         try {
-            l = new Lexer(Console.ReadLine());
-            p = new Parser(l, c);
-            i.parser = p;
-            Console.WriteLine(i.Interpret());
+            lexer = new Lexer(Console.ReadLine());
+            parser = new Parser(lexer, context);
+            interpreter.parser = parser;
+            Console.WriteLine(interpreter.Interpret());
         }
         catch (Exception e) {
             Console.WriteLine(e);

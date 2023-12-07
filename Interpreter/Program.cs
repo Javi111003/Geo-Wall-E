@@ -4,11 +4,11 @@ namespace Interpreter;
 
 class Massa {
     public static void Main(string[] args) {
-        Console.Write(">>> ");
-         Lexer l = new Lexer(Console.ReadLine());
+         Lexer l = new Lexer(";");
+         l = new Lexer(l.TextFrom(args[0]));
          Parser p = new Parser(l);
-	 Interpreter i = new Interpreter(p);
+         Interpreter i = new Interpreter(p);
 
-	 Console.WriteLine(i.Interpret());
+         Console.WriteLine(i.Interpret());
     }
 }
