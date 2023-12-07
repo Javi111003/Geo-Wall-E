@@ -1,4 +1,4 @@
-﻿<Window x:Class="WpfApp1.MainWindow"
+﻿<Window x:Class="Interpreter.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:syntax="clr-namespace:UI.SyntaxBox;assembly=UI.SyntaxBox"

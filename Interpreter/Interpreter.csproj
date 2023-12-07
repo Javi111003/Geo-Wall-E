@@ -1,13 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>OIG.ico</ApplicationIcon>
+    <AssemblyName>GeoWallE</AssemblyName>
+    <RootNamespace>GeoWallE</RootNamespace>
   </PropertyGroup>
-  <PropertyGroup>
-	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-</PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="posible_spash3.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="OIG.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FinalEngine.UI.SyntaxBox" Version="1.0.0" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="posible_spash3.jpg" />
+  </ItemGroup>
 
 </Project>

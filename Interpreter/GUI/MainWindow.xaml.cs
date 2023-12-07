@@ -15,9 +15,11 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Point = System.Windows.Point;
 
 
-namespace WpfApp1
+
+namespace Interpreter
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -33,7 +35,7 @@ namespace WpfApp1
             Status.Foreground = Brushes.Green;
         }
 
-        private void Build_Click(object sender, RoutedEventArgs e)//Boton para compilar
+        private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
         {
             HandlerUI handler = new HandlerUI(myTextBox.Text);
             Utils.ClearSerials();
@@ -41,8 +43,8 @@ namespace WpfApp1
             if (!STATUS) { Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes"; }
         }
 
-        //Abrir area de dibujo
-        private void Run_Click(object sender, RoutedEventArgs e)//Boton para  dibujar
+        //Abrir área de dibujo
+        private void Run_Click(object sender, RoutedEventArgs e)//Botón para  dibujar
         {
             PaintingArea paintingArea = new PaintingArea();
             paintingArea.Show();

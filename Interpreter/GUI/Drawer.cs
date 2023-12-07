@@ -7,8 +7,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Point = System.Windows.Point;
 
-namespace WpfApp1
+
+namespace Interpreter
 {
     public static class Drawer
     {

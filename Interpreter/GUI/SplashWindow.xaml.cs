@@ -14,7 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-namespace WpfApp1
+namespace Interpreter
 {
     /// <summary>
     /// Lógica de interacción para SplashWindow.xaml
@@ -22,7 +22,7 @@ namespace WpfApp1
     public partial class SplashWindow : Window
     {
         public SplashWindow()
-        {
+        { 
             InitializeComponent();
 
             // Crea un temporizador para cerrar la ventana de splash

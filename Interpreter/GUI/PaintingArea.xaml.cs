@@ -14,8 +14,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Point = System.Windows.Point;
 
-namespace WpfApp1
+
+namespace Interpreter
 {
     /// <summary>
     /// Lógica de interacción para PaintingArea.xaml

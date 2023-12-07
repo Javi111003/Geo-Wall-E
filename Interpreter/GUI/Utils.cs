@@ -10,14 +10,16 @@ using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Point = System.Windows.Point;
 
-namespace WpfApp1
+
+namespace Interpreter
 {
     public static class Utils//Encapsula métodos auxiliares
     {
         public static Stack<Brush> COLORS = new Stack<Brush>();
 
-        public static Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
+        public static System.Windows.Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
             Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
             Geometry og2 = g2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
@@ -29,7 +31,7 @@ namespace WpfApp1
             for (int i = 0; i < pg.Figures.Count; i++)
             {
                 Rect fig = new PathGeometry(new PathFigure[] { pg.Figures[i] }).Bounds;
-                result[i] = new Point(fig.Left + fig.Width / 2.0, fig.Top + fig.Height / 2.0);
+                result[i] = new System.Windows.Point(fig.Left + fig.Width / 2.0, fig.Top + fig.Height / 2.0);
             }
             return result;
         }
@@ -127,7 +129,7 @@ namespace WpfApp1
         public static void SavePath(Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
         {
             // Define la ruta del archivo
-            string filePath = $"C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\GUI\\Serials\\{fileName}.xaml";
+            string filePath = $"C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Intepreter\\GUI\\Serials\\{fileName}.xaml";
 
             // Crea un nuevo archivo
             using (var file = System.IO.File.Create(filePath)) { }
@@ -138,7 +140,7 @@ namespace WpfApp1
         }
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
-            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\GUI\\Serials\\";
+            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\GUI\\Serials\\";
             // Obtiene todos los archivos XAML
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 
@@ -152,7 +154,7 @@ namespace WpfApp1
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
-            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\GUI\\Serials\\";
+            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\GUI\\Serials\\";
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 
             foreach (var filepath in filePaths)

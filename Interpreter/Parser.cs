@@ -8,8 +8,7 @@ public class Parser {
     // We can use them to infer the type
     Lexer lexer;
     Token current_token;
-    Token[] tokens;
-    int idx;
+
 
     Token[] tokens;
     int index;
