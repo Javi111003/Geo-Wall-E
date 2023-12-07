@@ -65,7 +65,6 @@ public class TestLexer
         Lexer l = new Lexer("if 0 then \"blob\" else \"doko\"");
         Assert.Equal(l.GetNextToken(), new Token(Tokens.IF, "if"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.INTEGER, "0"));
-        l.GetNextToken();
         Assert.Equal(l.GetNextToken(), new Token(Tokens.THEN, "then"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "blob"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ELSE, "else"));

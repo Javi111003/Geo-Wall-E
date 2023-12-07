@@ -1,6 +1,8 @@
 using System.Text;
 using System.Reflection;
 
+using Interpreter.Figures;
+
 namespace Interpreter;
 
 public class AST {
@@ -68,11 +70,11 @@ public class AST<T>: AST {
         // this also means we don't care about the type (print)
         {DYNAMIC, typeof(object)},
         {SEQUENCE, typeof(Terms)},
-        {POINT, typeof(Point)},
-        {LINE, typeof(Line)},
-        {SEGMENT, typeof(Segment)},
-        {RAY, typeof(Ray)},
-        {ARC, typeof(Arc)}
+        {POINT, typeof(Figures.Point)},
+        {LINE, typeof(Figures.Line)},
+        {SEGMENT, typeof(Figures.Segment)},
+        {RAY, typeof(Figures.Ray)},
+        {ARC, typeof(Figures.Arc)}
     };
     public static Dictionary<Type, string> RevTypes = new Dictionary<Type, string>{
         {typeof(string), STRING},
@@ -82,12 +84,12 @@ public class AST<T>: AST {
         {typeof(object), DYNAMIC},
         {typeof(Terms), SEQUENCE},
         {typeof(SequenceLiteral), SEQUENCE},
-        {typeof(Point), POINT},
-        {typeof(Line), LINE},
-        {typeof(Segment), SEGMENT},
-        {typeof(Ray), RAY},
-        {typeof(Circle), CIRCLE},
-        {typeof(Arc), ARC}
+        {typeof(Figures.Point), POINT},
+        {typeof(Figures.Line), LINE},
+        {typeof(Figures.Segment), SEGMENT},
+        {typeof(Figures.Ray), RAY},
+        {typeof(Figures.Circle), CIRCLE},
+        {typeof(Figures.Arc), ARC}
     };
 
     public static string ToStr() {

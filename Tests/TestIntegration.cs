@@ -5,6 +5,7 @@ using System.Reflection;
 using Xunit;
 
 using Interpreter;
+using Interpreter.Figures;
 
 namespace Tests;
 
