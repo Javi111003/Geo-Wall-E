@@ -12,5 +12,9 @@
 #vs
 **/.vs/*
 *.sln
+<<<<<<< HEAD
+
+=======
 #lut
 *.lutconfig
+>>>>>>> 3d8dfe8e6691b966a16b024925e0f6d0a3e0eb1a

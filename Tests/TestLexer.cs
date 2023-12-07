@@ -66,6 +66,7 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.IF, "if"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.INTEGER, "0"));
         l.GetNextToken();
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.THEN, "then"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "blob"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ELSE, "else"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "doko"));
@@ -98,7 +99,7 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.COMMA, ","));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "b"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.COMMA, ","));
-        Assert.Equal(l.GetNextToken(), new Token(Tokens.UNDERSCORE, "_"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "_"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ASSIGN, "="));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.SEQUENCE_START, "{"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "p1"));
@@ -108,7 +109,7 @@ public class TestLexer
     public void TestMultiLine()
     {
         Lexer l = new Lexer("color blue;\ndraw line(p1, p2);\nrestore;");
-        Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "color"));
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.COLOR, "color"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ID, "blue"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.DRAW, "draw"));
