@@ -105,7 +105,7 @@ namespace WpfApp1
 
             Utils.SavePath(myPath, linea.GetHashCode().ToString());
         }
-        public static void DrawCircle(Point center,int radio)
+        public static void DrawCircle(Point center,float radio)
         {
             Path myPath = new Path();
             myPath.Stroke = Utils.COLORS.Peek();
@@ -120,7 +120,7 @@ namespace WpfApp1
             myPath.Data = circle;
             Utils.SavePath(myPath, circle.GetHashCode().ToString());
         }
-        public static void DrawArc(Point center , Point p2 , Point p3 , int radius)
+        public static void DrawArc(Point center , Point p2 , Point p3 , float radius)
         {
             Path myPath = new Path();
             myPath.Stroke = Utils.COLORS.Peek();
