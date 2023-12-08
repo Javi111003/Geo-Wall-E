@@ -132,8 +132,10 @@ namespace Interpreter
         }
         public static void SavePath(Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
         {
+            string directorio = System.IO.Directory.GetCurrentDirectory();
+            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
             // Define la ruta del archivo
-            string filePath = $"C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Intepreter\\Serials\\{fileName}.xaml";
+            string filePath = System.IO.Path.Combine(directorio, $"Serials\\{fileName}.xaml");
 
             // Crea un nuevo archivo
             using (var file = System.IO.File.Create(filePath)) { }
@@ -144,7 +146,9 @@ namespace Interpreter
         }
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
-            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\Serials\\";
+            string directorio = System.IO.Directory.GetCurrentDirectory();
+            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
+            string directoryPath=System.IO.Path.Combine(directorio,"Serials\\");
             // Obtiene todos los archivos XAML
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 
@@ -158,7 +162,9 @@ namespace Interpreter
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
-            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\Serials\\";
+            string directorio = System.IO.Directory.GetCurrentDirectory();
+            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
+            string directoryPath = System.IO.Path.Combine(directorio, "Serials\\");
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 
             foreach (var filepath in filePaths)

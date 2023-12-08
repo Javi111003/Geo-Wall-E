@@ -33,7 +33,7 @@ namespace Interpreter
             Utils.COLORS=new();Utils.COLORS.Push(Brushes.Black);
             Status.Text = "Estado: Listo";
             Status.Foreground = Brushes.Green;
-            RunButton.IsEnabled = false;
+            RunButton.IsEnabled = true;
         }
 
         private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
@@ -41,7 +41,7 @@ namespace Interpreter
             Utils.ClearSerials();
             var retorno = EvalHandler.Eval(myTextBox.Text);
             MessageBox.Show("the app is building");
-            if (!(bool)retorno["sucess"]) 
+            if (!(bool)retorno["success"]) 
             {
                 var errors = retorno["errors"];
                 Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes";STATUS = false;
