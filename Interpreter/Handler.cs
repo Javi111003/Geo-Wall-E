@@ -15,13 +15,13 @@ public static class EvalHandler {
         };
 
         if (lexer.LastError.Item1 is not null) {
-            response["sucess"] = false;
+            response["success"] = false;
             response["errors"] = lexer.LastError;
             return response;
         }
         Parser parser = new Parser(lexer);
         if (parser.LastError.Item1 is not null) {
-            response["sucess"] = false;
+            response["success"] = false;
             response["errors"] = parser.LastError;
             return response;
         }

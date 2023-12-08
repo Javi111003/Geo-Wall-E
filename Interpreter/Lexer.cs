@@ -225,7 +225,7 @@ public class Lexer {
                 this.GetResult((string s) => s == " ");
                 continue;
             }
-            else if (this.current_char[0] == '\n') {
+            else if (this.current_char[0] == '\n' || this.current_char[0] == '\r') {
                 this.Advance();
                 continue;
             }
