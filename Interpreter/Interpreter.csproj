@@ -5,17 +5,18 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>OIG.ico</ApplicationIcon>
+    <ApplicationIcon>GUI/OIG.ico</ApplicationIcon>
     <AssemblyName>GeoWallE</AssemblyName>
     <RootNamespace>GeoWallE</RootNamespace>
+    <ImplicitUsings>true</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="posible_spash3.jpg" />
+      <None Remove="GUI/posible_spash3.jpg" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="OIG.ico" />
+      <Content Include="GUI/OIG.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="posible_spash3.jpg" />
+      <Resource Include="GUI/posible_spash3.jpg" />
   </ItemGroup>
 
 </Project>

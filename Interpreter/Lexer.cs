@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace Interpreter;
 
@@ -265,7 +266,7 @@ public class Lexer {
                 return this.GetNextToken();
             }
 
-            if (token_repr == "//")//Es un comentario por tanto se ignora el resto de la línea
+            if (token_repr == "//")//Es un comentario por tanto se ignora el resto de la lú‹ea
             {
                 while (current_char != "\n") 
                 { this.Advance();
