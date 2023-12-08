@@ -19,7 +19,7 @@ namespace Interpreter
     {
         public static Stack<Brush> COLORS = new Stack<Brush>();
 
-        public static Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
+        public static Dictionary<string,dynamic>[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
             Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
             Geometry og2 = g2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
@@ -27,11 +27,12 @@ namespace Interpreter
             CombinedGeometry cg = new CombinedGeometry(GeometryCombineMode.Intersect, og1, og2);
 
             PathGeometry pg = cg.GetFlattenedPathGeometry();
-            Point[] result = new Point[pg.Figures.Count];
+            Dictionary<string, dynamic>[] result = new Dictionary<string, dynamic>[pg.Figures.Count];
             for (int i = 0; i < pg.Figures.Count; i++)
             {
                 Rect fig = new PathGeometry(new PathFigure[] { pg.Figures[i] }).Bounds;
-                result[i] = new System.Windows.Point(fig.Left + fig.Width / 2.0, fig.Top + fig.Height / 2.0);
+                var punto = new System.Windows.Point(fig.Left + fig.Width / 2.0, fig.Top + fig.Height / 2.0);
+                result[i] = new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, float>() { { "x", Convert.ToSingle(punto.X) }, { "y", Convert.ToSingle(punto.Y) } } } };
             }
             return result;
         }
@@ -132,7 +133,7 @@ namespace Interpreter
         public static void SavePath(Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
         {
             // Define la ruta del archivo
-            string filePath = $"C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Intepreter\\GUI\\Serials\\{fileName}.xaml";
+            string filePath = $"C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Intepreter\\Serials\\{fileName}.xaml";
 
             // Crea un nuevo archivo
             using (var file = System.IO.File.Create(filePath)) { }
@@ -143,7 +144,7 @@ namespace Interpreter
         }
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
-            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\GUI\\Serials\\";
+            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\Serials\\";
             // Obtiene todos los archivos XAML
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 
@@ -157,7 +158,7 @@ namespace Interpreter
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
-            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\GUI\\Serials\\";
+            string directoryPath = "C:\\Users\\javie\\OneDrive\\Documentos\\GitHub\\geo_walle\\Interpreter\\Serials\\";
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 
             foreach (var filepath in filePaths)
@@ -185,7 +186,11 @@ namespace Interpreter
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
                         Dictionary<string, float> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
-                    }; break;
+                        var line = new LineGeometry();
+                        line.StartPoint = punto1;
+                        line.EndPoint = punto2;
+                        return line;
+                    }
                 case "segment":
                     {
                         Dictionary<string, dynamic> puntos = figure["params"];
@@ -195,7 +200,11 @@ namespace Interpreter
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
                         Dictionary<string, float> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
-                    }; break;
+                        var line = new LineGeometry();
+                        line.StartPoint = punto1;
+                        line.EndPoint = punto2;
+                        return line;
+                    }
                 case "ray":
                     {
                         Dictionary<string, dynamic> puntos = figure["params"];
@@ -205,7 +214,11 @@ namespace Interpreter
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
                         Dictionary<string, float> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
-                    }; break;
+                        var line = new LineGeometry();
+                        line.StartPoint = punto1;
+                        line.EndPoint = punto2;
+                        return line;
+                    }
                 case "circle":
                     {
                         Dictionary<string, dynamic> circle = figure["params"];
@@ -213,7 +226,12 @@ namespace Interpreter
                         Dictionary<string, dynamic> coord = center["params"];
                         var centro = new Point(coord["x"], coord["y"]);
                         float radius = circle["radius"];
-                    }; break;
+                        var circleGeo = new EllipseGeometry();
+                        circleGeo.RadiusX = radius;
+                        circleGeo.RadiusY = radius;
+                        circleGeo.Center = centro;//centro 
+                        return circleGeo;
+                    }
                 case "arc":
                     {
                         Dictionary<string, dynamic> arc = figure["params"];
@@ -229,7 +247,7 @@ namespace Interpreter
                         float measure = arc["measure"];
                     }; break;
             }
-            return null;
+            throw new Exception("These objects not can be intersected");
         }
     }
 }

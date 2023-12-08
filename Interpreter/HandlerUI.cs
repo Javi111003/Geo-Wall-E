@@ -20,17 +20,15 @@ namespace Interpreter
         public static string Code { get; set; }
 
         public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//medida entre dos puntos 
-        {
-            
-            return Utils.Measure(p1, p2);
-            
+        {           
+            return Utils.Measure(p1, p2);   
         }
 
         public static IEnumerable<Dictionary<string, dynamic>> Intersection(Dictionary<string, dynamic> fig1, Dictionary<string, dynamic> fig2)//intersect
         {
-            // FIXME
-            //return Utils.GetIntersectionPoints(fig1, fig2);
-            yield return GetPoint();
+            Geometry geo1= Utils.BuildGeometry(fig1);
+            Geometry geo2= Utils.BuildGeometry(fig2);
+            return Utils.GetIntersectionPoints(geo1, geo2);
         }
 
         public static IEnumerable<Dictionary<string, dynamic>> Points(Dictionary<string, dynamic> fig1) // points from a figure

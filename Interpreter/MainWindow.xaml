@@ -93,19 +93,20 @@
             <!-- Botones para compilar y ejecutar -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="650,10,0,10" Grid.Column="1">
                 <Button Name="BuildButton" Style="{StaticResource HoverButton}" Content="Build" Click="Build_Click" Margin="0,0,10,0">
-
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
+                                <Image x:Name="myImage" Source="C:\Users\javie\OneDrive\Documentos\GitHub\geo_walle\Interpreter\Images\build_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Build" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <Button Name="RunButton" Margin="0,0,10,0" Style="{StaticResource HoverButton}" Content="Run" Click="Run_Click">
+                <Button Name="RunButton" Style="{StaticResource HoverButton}" Content="Run" Click="Run_Click" Margin="0,0,10,0">
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
+                                <Image x:Name="myImage" Source="C:\Users\javie\OneDrive\Documentos\GitHub\geo_walle\Interpreter\Images\run_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Run" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>
