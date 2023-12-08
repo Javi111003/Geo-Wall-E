@@ -41,6 +41,7 @@ namespace Interpreter
             Utils.ClearSerials();
             var retorno = EvalHandler.Eval(myTextBox.Text);
             MessageBox.Show("the app is building");
+            MessageBox.Show("Logs: " + retorno["console_log"]);
             if (!(bool)retorno["success"]) 
             {
                 var errors = retorno["errors"];

@@ -34,7 +34,7 @@ namespace Interpreter
             {
                 Rect fig = new PathGeometry(new PathFigure[] { pg.Figures[i] }).Bounds;
                 var punto = new System.Windows.Point(fig.Left + fig.Width / 2.0, fig.Top + fig.Height / 2.0);
-                result[i] = new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, float>() { { "x", Convert.ToSingle(punto.X) }, { "y", Convert.ToSingle(punto.Y) } } } };
+                result[i] = new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", Convert.ToSingle(punto.X) }, { "y", Convert.ToSingle(punto.Y) } } } };
             }
             return result;
         }
@@ -49,8 +49,8 @@ namespace Interpreter
         }
         public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//distancia entre dos puntos
         {
-            Dictionary<string, float> coordP1 = p1["params"];
-            Dictionary<string, float> coordP2 = p2["params"];
+            Dictionary<string, dynamic> coordP1 = p1["params"];
+            Dictionary<string, dynamic> coordP2 = p2["params"];
 
             int measure = Convert.ToInt32(Math.Sqrt(Math.Pow(coordP2["y"] - coordP1["y"], 2) + Math.Pow(coordP2["x"] - coordP1["x"], 2)));
 
@@ -190,7 +190,7 @@ namespace Interpreter
             {
                 case "point":
                     {
-                        Dictionary<string, float> parametros = figure["params"];
+                        Dictionary<string, dynamic> parametros = figure["params"];
                         return Utils.PointToGeometry(new Point(parametros["x"], parametros["y"]));
                     }
                 case "line":
@@ -198,9 +198,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -212,9 +212,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -226,9 +226,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -255,10 +255,10 @@ namespace Interpreter
                         Dictionary<string, dynamic> coord = centro["params"];
                         var center = new Point(coord["x"], coord["y"]);
                         Dictionary<string, dynamic> p2 = arc["p2"];
-                        Dictionary<string, float> coordP2 = p2["params"];
+                        Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         Dictionary<string, dynamic> p3 = arc["p3"];
-                        Dictionary<string, float> coordP3 = p3["params"];
+                        Dictionary<string, dynamic> coordP3 = p3["params"];
                         var punto3 = new Point(coordP3["x"], coordP3["y"]);
                         float measure = arc["measure"];
                     }; break;

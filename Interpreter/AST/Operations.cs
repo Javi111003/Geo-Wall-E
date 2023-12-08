@@ -12,13 +12,13 @@ public abstract class BinaryOperation<T, R>: AST<R> {
 
     public override dynamic Eval(Context ctx) {
         // ValidateArgs -> See Type and check if they are valid before eval
-        try {
+        //try {
             return this.Operation(this.left.Eval(ctx), this.right.Eval(ctx));
-        }
-        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
+        //}
+        //catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) {
             string msg = $"Unsupported operand type(s) for {this.GetType().Name.ToLower()}: {this.left.Type} and {this.right.Type}";
-            throw new RuntimeError(msg);
-        }
+        //    throw new RuntimeError(msg);
+        //}
     }
 
     public override Exception Check() {
