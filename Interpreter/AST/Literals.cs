@@ -176,11 +176,10 @@ public class Terms: AST {
         str.Append("}");
         return str.ToString();
     }
-
 }
 
 // block node... reimagined
-public class SequenceLiteral : Literal<Terms> {
+public class SequenceLiteral : Literal<Terms>, Drawable {
 
     public SequenceLiteral(Terms val): base(val) {}
 
@@ -203,6 +202,19 @@ public class SequenceLiteral : Literal<Terms> {
     public IEnumerator<AST> GetEnumerator() {
         // convenience method
         return this.val.GetEnumerator();
+    }
+
+    public Dictionary<string, dynamic> GetDrawParams() {
+        List<Dictionary<string, dynamic>> ls = new List<Dictionary<string, dynamic>>();
+
+        foreach(Drawable fig in this.Val()) {
+            ls.Add(fig.GetDrawParams());
+        }
+
+        return new Dictionary<string, dynamic> {
+            {"type", "sequence"},
+            {"params", ls},
+        };
     }
 }
 
