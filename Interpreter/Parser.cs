@@ -79,15 +79,17 @@ public class Parser {
    }
 
    public Token Peek(int steps = 1) {
-       if (this.index < 0 || (this.index > this.tokens.Length)) {
+       if (this.index < 0 || (this.index >= this.tokens.Length - steps)) {
            // return EOF so it doesn't match anything (except, maybe ending whatever loop is using peek)
            return new Token(Tokens.EOF);
        }
        return this.tokens[this.index + steps];
    }
 
-   public string ErrorMessage() {
+   public string ErrorMessage(Exception e) {
         string msg = $"Error parsing line {this.current_token.Line} col {this.current_token.column}";
+        msg += '\n'.ToString();
+        msg += e.ToString();
         msg += '\n'.ToString();
         msg += this.lexer.LastLine;
         msg += '\n'.ToString();
@@ -101,7 +103,7 @@ public class Parser {
    }
 
     public void Error(Exception exception) {
-        string msg = this.ErrorMessage();
+        string msg = this.ErrorMessage(exception);
         this.LastError = (exception.ToString(), msg);
 
         Console.WriteLine(msg);
@@ -661,11 +663,8 @@ public class Parser {
             var args = this.Expr();
             // string
             AST label = new AST();
-            try {
+            if (this.current_token.type == Tokens.STRING) {
                 label = this.LiteralNode();
-            }
-            catch {
-                
             }
             return this.FunctionCall(name, new BlockNode(new List<AST>{args, label}));
         }
@@ -764,7 +763,7 @@ public class Parser {
             }
             catch (Exception e) {
                 if (this.LastError.Item1 is null) {
-                    this.LastError = (e.ToString(), this.ErrorMessage());
+                    this.LastError = (e.ToString(), this.ErrorMessage(e));
                 }
                 if (this.debug) {
                     throw e;
