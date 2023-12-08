@@ -57,7 +57,7 @@ namespace Interpreter
             {
                 case "point":
                     {
-                        Dictionary<string, float> parametros = figure["params"];
+                        Dictionary<string, dynamic> parametros = figure["params"];
                         Drawer.DrawPoint(new Point(parametros["x"], parametros["y"]));
                     }; break;
                 case "line":
@@ -65,9 +65,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         Drawer.DrawLine(punto1, punto2);
                     }; break;
@@ -76,9 +76,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         Drawer.DrawSegment(punto1, punto2);
                     }; break;
@@ -87,9 +87,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         Drawer.DrawRay(punto1, punto2);
                     }; break;
@@ -109,10 +109,10 @@ namespace Interpreter
                         Dictionary<string, dynamic> coord = centro["params"];
                         var center = new Point(coord["x"], coord["y"]);
                         Dictionary<string, dynamic> p2 = arc["p2"];
-                        Dictionary<string, float> coordP2 = p2["params"];
+                        Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         Dictionary<string, dynamic> p3 = arc["p3"];
-                        Dictionary<string, float> coordP3 = p3["params"];
+                        Dictionary<string, dynamic> coordP3 = p3["params"];
                         var punto3 = new Point(coordP3["x"], coordP3["y"]);
                         float measure = arc["measure"];
                         Drawer.DrawArc(center, punto2, punto3, measure);

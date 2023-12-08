@@ -136,7 +136,7 @@ namespace Interpreter
         public static string SerialPath() {
             DirectoryInfo BASE_DIR = new DirectoryInfo(
                 Assembly.GetAssembly(typeof (_Interpreter)).Location
-            ).Parent.Parent.Parent.Parent;
+            ).Parent.Parent.Parent.Parent.Parent;
 
             return System.IO.Path.Join(BASE_DIR.ToString(), "Serials");
         }
@@ -166,7 +166,6 @@ namespace Interpreter
             try {
                 foreach (string filePath in SerialFiles())
                 {
-                    MessageBox.Show(filePath);
                     var xaml = System.IO.File.ReadAllText(filePath);
                     System.Windows.Shapes.Path path = (System.Windows.Shapes.Path)XamlReader.Parse(xaml);
                     myCanvas.Children.Add(path);
@@ -178,12 +177,7 @@ namespace Interpreter
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
-            string directorio = System.IO.Directory.GetCurrentDirectory();
-            //directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
-            string directoryPath = System.IO.Path.Combine(directorio, "Serials\\");
-            string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
-
-            foreach (var filepath in filePaths)
+            foreach (var filepath in SerialFiles())
             {
                 System.IO.File.Delete(filepath);
             }

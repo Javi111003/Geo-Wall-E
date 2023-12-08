@@ -226,20 +226,20 @@ public class Parser {
         }
         else if (type == "circle") {
             var metadata = HandlerUI.GetCircle();
-            var param = metadata["circle"];
+            var param = metadata["params"];
 
             return new List<AST>{
                 new Literal<Figures.Point>(
                     new Figures.Point(param["center"])
                  ),
-                new IntLiteral(
+                new FloatLiteral(
                     param["radius"]
                 )
             };
         }
         else if (type == "arc") {
             var metadata = HandlerUI.GetArc();
-            var param = metadata["arc"];
+            var param = metadata["params"];
             return new List<AST>{
                 new Literal<Figures.Point>(
                     new Figures.Point(param["center"])
@@ -250,7 +250,7 @@ public class Parser {
                 new Literal<Figures.Point>(
                     new Figures.Point(param["p3"])
                 ),
-                new IntLiteral(
+                new FloatLiteral(
                     param["measure"]
                 )
             };
@@ -758,18 +758,7 @@ public class Parser {
         AST node = null;
 
         while (this.current_token.type != Tokens.EOF) {
-            try {
-                node = this.ParseNode();
-            }
-            catch (Exception e) {
-                if (this.LastError.Item1 is null) {
-                    this.LastError = (e.ToString(), this.ErrorMessage(e));
-                }
-                if (this.debug) {
-                    throw e;
-                }
-                return null;
-            }
+            node = this.ParseNode();
             this.Eat(Tokens.END);
             nodes.Add(node);
         }

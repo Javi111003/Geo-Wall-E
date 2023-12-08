@@ -44,6 +44,7 @@ namespace Interpreter
             if (!(bool)retorno["success"]) 
             {
                 var errors = retorno["errors"];
+                MessageBox.Show(errors.ToString());
                 Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes";STATUS = false;
                 RunButton.IsEnabled=false;
             }
