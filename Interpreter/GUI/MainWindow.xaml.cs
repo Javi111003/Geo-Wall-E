@@ -33,14 +33,26 @@ namespace Interpreter
             Utils.COLORS=new();Utils.COLORS.Push(Brushes.Black);
             Status.Text = "Estado: Listo";
             Status.Foreground = Brushes.Green;
+            RunButton.IsEnabled = false;
         }
 
         private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
         {
-            HandlerUI handler = new HandlerUI(myTextBox.Text);
+            var retorno = EvalHandler.Eval(myTextBox.Text);
             Utils.ClearSerials();
             MessageBox.Show("the app is building");
-            if (!STATUS) { Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes"; }
+            if (!retorno["sucess"]) 
+            {
+                var errors = retorno["errors"];
+                Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes";STATUS = false;
+                RunButton.IsEnabled=false;
+            }
+            else
+            {
+                RunButton.IsEnabled= true;
+                STATUS = true;Status.Text = "Estado: Listo";Status.Foreground = Brushes.Green;
+                HandlerUI.Draw(retorno["console_log"]);
+            }
         }
 
         //Abrir área de dibujo

@@ -92,7 +92,7 @@
             </TextBox>
             <!-- Botones para compilar y ejecutar -->
             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="650,10,0,10" Grid.Column="1">
-                <Button Style="{StaticResource HoverButton}" Content="Build" Click="Build_Click" Margin="0,0,10,0">
+                <Button Name="BuildButton" Style="{StaticResource HoverButton}" Content="Build" Click="Build_Click" Margin="0,0,10,0">
 
                     <Button.Template>
                         <ControlTemplate>
@@ -103,7 +103,7 @@
                         </ControlTemplate>
                     </Button.Template>
                 </Button>
-                <Button Margin="0,0,10,0" Style="{StaticResource HoverButton}" Content="Run" Click="Run_Click">
+                <Button Name="RunButton" Margin="0,0,10,0" Style="{StaticResource HoverButton}" Content="Run" Click="Run_Click">
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">

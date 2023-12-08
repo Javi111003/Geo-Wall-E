@@ -14,14 +14,10 @@ using Point = System.Windows.Point;
 
 namespace Interpreter
 {
-    public class HandlerUI
+    public static class HandlerUI
     {
-        public Dictionary<int, Geometry> DrawedFigures = new Dictionary<int, Geometry>();
-        public HandlerUI(string text)
-        {
-            Code = text;
-        }
-        public string Code { get; set; }
+        public static Dictionary<int, Geometry> DrawedFigures = new Dictionary<int, Geometry>();
+        public static string Code { get; set; }
 
         public static int Measure(Point p1, Point p2)//medida entre dos puntos 
         {
