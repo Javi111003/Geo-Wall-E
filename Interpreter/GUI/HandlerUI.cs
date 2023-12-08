@@ -21,9 +21,9 @@ namespace Interpreter
 
         public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//medida entre dos puntos 
         {
-            // FIXME
-            //return Utils.Measure(p1, p2);
-            return -1;
+            
+            return Utils.Measure(p1, p2);
+            
         }
 
         public static IEnumerable<Dictionary<string, dynamic>> Intersection(Dictionary<string, dynamic> fig1, Dictionary<string, dynamic> fig2)//intersect
@@ -40,18 +40,14 @@ namespace Interpreter
             yield return GetPoint();
         }
 
-        public static void Color() // random points
+        public static void Color(string color)
         {
-            // FIXME
-            //return Utils.GetIntersectionPoints(fig1, fig2);
-            return;
+            Utils.SelectColor(color);
         }
 
         public static void Restore()
         {
-            // FIXME
-            //return Utils.GetIntersectionPoints(fig1, fig2);
-            return;
+           Utils.RestoreColor();
         }
 
 

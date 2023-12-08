@@ -38,10 +38,10 @@ namespace Interpreter
 
         private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
         {
-            var retorno = EvalHandler.Eval(myTextBox.Text);
             Utils.ClearSerials();
+            var retorno = EvalHandler.Eval(myTextBox.Text);
             MessageBox.Show("the app is building");
-            if (!retorno["sucess"]) 
+            if (!(bool)retorno["sucess"]) 
             {
                 var errors = retorno["errors"];
                 Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes";STATUS = false;
@@ -51,7 +51,6 @@ namespace Interpreter
             {
                 RunButton.IsEnabled= true;
                 STATUS = true;Status.Text = "Estado: Listo";Status.Foreground = Brushes.Green;
-                HandlerUI.Draw(retorno["console_log"]);
             }
         }
 
@@ -59,6 +58,7 @@ namespace Interpreter
         private void Run_Click(object sender, RoutedEventArgs e)//Botón para  dibujar
         {
             PaintingArea paintingArea = new PaintingArea();
+            Utils.LoadAllPaths(paintingArea.MyCanvas);
             paintingArea.Show();
         }
 

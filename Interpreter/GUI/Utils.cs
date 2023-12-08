@@ -19,7 +19,7 @@ namespace Interpreter
     {
         public static Stack<Brush> COLORS = new Stack<Brush>();
 
-        public static System.Windows.Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
+        public static Point[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
             Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
             Geometry og2 = g2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
@@ -44,9 +44,12 @@ namespace Interpreter
 
             return representation;
         }
-        public static int Measure(Point point1, Point point2)//distancia entre dos puntos
+        public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//distancia entre dos puntos
         {
-            int measure = Convert.ToInt32(Math.Sqrt(Math.Pow(point2.Y - point1.Y, 2) + Math.Pow(point2.X - point1.X, 2)));
+            Dictionary<string, float> coordP1 = p1["params"];
+            Dictionary<string, float> coordP2 = p2["params"];
+
+            int measure = Convert.ToInt32(Math.Sqrt(Math.Pow(coordP2["y"] - coordP1["y"], 2) + Math.Pow(coordP2["x"] - coordP1["x"], 2)));
 
             return measure;
         }
@@ -161,6 +164,72 @@ namespace Interpreter
             {
                 System.IO.File.Delete(filepath);
             }
+        }
+        public static Geometry BuildGeometry(Dictionary<string,dynamic> figure)
+        {
+            string type = figure["type"];
+
+            switch (type)
+            {
+                case "point":
+                    {
+                        Dictionary<string, float> parametros = figure["params"];
+                        return Utils.PointToGeometry(new Point(parametros["x"], parametros["y"]));
+                    }
+                case "line":
+                    {
+                        Dictionary<string, dynamic> puntos = figure["params"];
+                        Dictionary<string, dynamic> p1 = puntos["p1"];
+                        Dictionary<string, dynamic> p2 = puntos["p2"];
+                        Dictionary<string, float> coordP1 = p1["params"];
+                        var punto1 = new Point(coordP1["x"], coordP1["y"]);
+                        Dictionary<string, float> coordP2 = p1["params"];
+                        var punto2 = new Point(coordP2["x"], coordP2["y"]);
+                    }; break;
+                case "segment":
+                    {
+                        Dictionary<string, dynamic> puntos = figure["params"];
+                        Dictionary<string, dynamic> p1 = puntos["p1"];
+                        Dictionary<string, dynamic> p2 = puntos["p2"];
+                        Dictionary<string, float> coordP1 = p1["params"];
+                        var punto1 = new Point(coordP1["x"], coordP1["y"]);
+                        Dictionary<string, float> coordP2 = p1["params"];
+                        var punto2 = new Point(coordP2["x"], coordP2["y"]);
+                    }; break;
+                case "ray":
+                    {
+                        Dictionary<string, dynamic> puntos = figure["params"];
+                        Dictionary<string, dynamic> p1 = puntos["p1"];
+                        Dictionary<string, dynamic> p2 = puntos["p2"];
+                        Dictionary<string, float> coordP1 = p1["params"];
+                        var punto1 = new Point(coordP1["x"], coordP1["y"]);
+                        Dictionary<string, float> coordP2 = p1["params"];
+                        var punto2 = new Point(coordP2["x"], coordP2["y"]);
+                    }; break;
+                case "circle":
+                    {
+                        Dictionary<string, dynamic> circle = figure["params"];
+                        Dictionary<string, dynamic> center = circle["center"];
+                        Dictionary<string, dynamic> coord = center["params"];
+                        var centro = new Point(coord["x"], coord["y"]);
+                        float radius = circle["radius"];
+                    }; break;
+                case "arc":
+                    {
+                        Dictionary<string, dynamic> arc = figure["params"];
+                        Dictionary<string, dynamic> centro = arc["center"];
+                        Dictionary<string, dynamic> coord = centro["params"];
+                        var center = new Point(coord["x"], coord["y"]);
+                        Dictionary<string, dynamic> p2 = arc["p2"];
+                        Dictionary<string, float> coordP2 = p2["params"];
+                        var punto2 = new Point(coordP2["x"], coordP2["y"]);
+                        Dictionary<string, dynamic> p3 = arc["p3"];
+                        Dictionary<string, float> coordP3 = p3["params"];
+                        var punto3 = new Point(coordP3["x"], coordP3["y"]);
+                        float measure = arc["measure"];
+                    }; break;
+            }
+            return null;
         }
     }
 }

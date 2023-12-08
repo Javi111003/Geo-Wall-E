@@ -467,7 +467,7 @@ namespace Interpreter {
         public ColorDeclBlockNode(AST f1) : base(f1) {}
 
         public override object Operation(string f1) {
-            HandlerUI.Color();
+            HandlerUI.Color(f1);
             return null;
         }
     }
@@ -485,7 +485,7 @@ namespace Interpreter {
         public RestoreDeclBlockNode() : base(AST<object>.ToStr()) {}
 
         public override dynamic Eval(Context ctx) {
-            HandlerUI.Color();
+            HandlerUI.Restore();
             return null;
         }
     }
