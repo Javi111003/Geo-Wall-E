@@ -21,9 +21,6 @@
         </EventTrigger>
     </Window.Triggers>
     <Grid>
-        <Grid.Background>
-            <ImageBrush ImageSource="C:\Users\javie\OneDrive\Documentos\GitHub\geo_walle\Interpreter\Images\present2.jpg"></ImageBrush>
-        </Grid.Background>
         <TextBlock Text="Cargando..." HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20"/>
     </Grid>
 </Window>

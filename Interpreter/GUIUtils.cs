@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.IO;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +19,7 @@ namespace Interpreter
 {
     public static class Utils//Encapsula métodos auxiliares
     {
-        public static Stack<Brush> COLORS = new Stack<Brush>();
+        public static Stack<Brush> COLORS = new Stack<Brush>(new Brush[]{Brushes.Blue});
 
         public static Dictionary<string,dynamic>[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
@@ -130,12 +132,26 @@ namespace Interpreter
             }
             return result;
         }
-        public static void SavePath(Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
+
+        public static string SerialPath() {
+            DirectoryInfo BASE_DIR = new DirectoryInfo(
+                Assembly.GetAssembly(typeof (_Interpreter)).Location
+            ).Parent.Parent.Parent.Parent;
+
+            return System.IO.Path.Join(BASE_DIR.ToString(), "Serials");
+        }
+
+        public static string SerialFile(string filename) {
+            return System.IO.Path.Join(SerialPath(), $"{filename}.xaml");
+        }
+
+        public static string[] SerialFiles() {
+             return System.IO.Directory.GetFiles(SerialPath(), "*.xaml");
+        }
+
+        public static void SavePath(System.Windows.Shapes.Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
         {
-            string directorio = System.IO.Directory.GetCurrentDirectory();
-            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
-            // Define la ruta del archivo
-            string filePath = System.IO.Path.Combine(directorio, $"Serials\\{fileName}.xaml");
+            string filePath = SerialFile(fileName);
 
             // Crea un nuevo archivo
             using (var file = System.IO.File.Create(filePath)) { }
@@ -146,24 +162,24 @@ namespace Interpreter
         }
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
-            string directorio = System.IO.Directory.GetCurrentDirectory();
-            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
-            string directoryPath=System.IO.Path.Combine(directorio,"Serials\\");
-            // Obtiene todos los archivos XAML
-            string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
-
             // Deserializa y añade cada Path al Canvas
-            foreach (string filePath in filePaths)
-            {
-                var xaml = System.IO.File.ReadAllText(filePath);
-                Path path = (Path)XamlReader.Parse(xaml);
-                myCanvas.Children.Add(path);
+            try {
+                foreach (string filePath in SerialFiles())
+                {
+                    MessageBox.Show(filePath);
+                    var xaml = System.IO.File.ReadAllText(filePath);
+                    System.Windows.Shapes.Path path = (System.Windows.Shapes.Path)XamlReader.Parse(xaml);
+                    myCanvas.Children.Add(path);
+                }
+            }
+            catch (Exception e) {
+                MessageBox.Show(e.ToString());
             }
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
             string directorio = System.IO.Directory.GetCurrentDirectory();
-            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
+            //directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
             string directoryPath = System.IO.Path.Combine(directorio, "Serials\\");
             string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
 

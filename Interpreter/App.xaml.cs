@@ -16,6 +16,7 @@ namespace Interpreter
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            /*
 
             var splashWindow = new SplashWindow();
             splashWindow.Closed += (s, eventArgs) =>
@@ -25,6 +26,7 @@ namespace Interpreter
                 mainWindow.Show();
             };
             splashWindow.Show();
+            */
         }
     }
 }

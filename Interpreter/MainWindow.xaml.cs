@@ -57,7 +57,13 @@ namespace Interpreter
         //Abrir área de dibujo
         private void Run_Click(object sender, RoutedEventArgs e)//Botón para  dibujar
         {
-            PaintingArea paintingArea = new PaintingArea();
+            PaintingArea paintingArea = null;
+            try {
+                 paintingArea = new PaintingArea();
+            }
+            catch (Exception a) {
+                MessageBox.Show(a.ToString());
+            }
             Utils.LoadAllPaths(paintingArea.MyCanvas);
             paintingArea.Show();
         }

@@ -119,6 +119,7 @@ namespace Interpreter
                     }; break;
             }
         }
+
         #endregion
 
         #region HandlerUI.GetFigure(Envío de parámetros aleatorios al parser para figuras sin parámetros)
