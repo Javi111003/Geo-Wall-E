@@ -33,14 +33,14 @@ namespace Interpreter
             Utils.COLORS=new();Utils.COLORS.Push(Brushes.Black);
             Status.Text = "Estado: Listo";
             Status.Foreground = Brushes.Green;
-            RunButton.IsEnabled = true;
+            RunButton.IsEnabled = false;
         }
 
         private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
         {
             Utils.ClearSerials();
             var retorno = EvalHandler.Eval(myTextBox.Text);
-            MessageBox.Show("the app is building");
+            MessageBox.Show("The app is building");
             if (!(bool)retorno["success"]) 
             {
                 var errors = retorno["errors"];
