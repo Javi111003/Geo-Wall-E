@@ -283,7 +283,7 @@ public class Lexer {
         }
         return new Token(Tokens.EOF, null, this.Line, this.column);
     }
-    private Token[] FetchAllTokens()
+    public Token[] GetAllTokens()
     {
         List<Token> tokens = new List<Token>();
         while (this.current_char != "") {
@@ -322,20 +322,5 @@ public class Lexer {
         }
         tokens.Add(new Token(Tokens.EOF));
         return tokens.ToArray();
-    }
-
-    public Token[] GetAllTokens() {
-        Token[] tokens = null;
-        try {
-            tokens = this.FetchAllTokens();
-        }
-        catch (Exception e){
-            this.LastError = (e.ToString(), this.ErrorMessage());
-            if (this.debug) {
-                throw e;
-            }
-            return null;
-        }
-        return tokens;
     }
 }

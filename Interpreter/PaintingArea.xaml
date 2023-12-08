@@ -7,7 +7,7 @@
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="IsTimetoPaint"
-        Icon="C:\Users\javie\OneDrive\Documentos\GitHub\geo_walle\Interpreter\Images\posible_splash1.jpg">
+      >
 
     <Grid>
         <Grid.RowDefinitions>

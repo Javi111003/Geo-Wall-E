@@ -54,7 +54,7 @@ namespace Interpreter {
             public Dictionary<string, dynamic> GetDrawParams() {
                 return new Dictionary<string, dynamic> {
                     {"type", this.GetType().Name.ToLower()},
-                    {"params", new Dictionary<string, float>{{"x", this.x}, {"y", this.y}}}
+                    {"params", new Dictionary<string, dynamic>{{"x", this.x}, {"y", this.y}}}
                 };
             }
 
@@ -344,6 +344,9 @@ namespace Interpreter {
                     Drawable fig = (Drawable) ast.Eval(ctx);
                     this.Operation(fig);
                 }
+            }
+            else {
+                return this.Operation(this.block.Eval(ctx));
             }
             return null;
         }

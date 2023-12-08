@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.IO;
 using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +19,7 @@ namespace Interpreter
 {
     public static class Utils//Encapsula métodos auxiliares
     {
-        public static Stack<Brush> COLORS = new Stack<Brush>();
+        public static Stack<Brush> COLORS = new Stack<Brush>(new Brush[]{Brushes.Blue});
 
         public static Dictionary<string,dynamic>[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
@@ -32,7 +34,7 @@ namespace Interpreter
             {
                 Rect fig = new PathGeometry(new PathFigure[] { pg.Figures[i] }).Bounds;
                 var punto = new System.Windows.Point(fig.Left + fig.Width / 2.0, fig.Top + fig.Height / 2.0);
-                result[i] = new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, float>() { { "x", Convert.ToSingle(punto.X) }, { "y", Convert.ToSingle(punto.Y) } } } };
+                result[i] = new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", Convert.ToSingle(punto.X) }, { "y", Convert.ToSingle(punto.Y) } } } };
             }
             return result;
         }
@@ -47,8 +49,8 @@ namespace Interpreter
         }
         public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//distancia entre dos puntos
         {
-            Dictionary<string, float> coordP1 = p1["params"];
-            Dictionary<string, float> coordP2 = p2["params"];
+            Dictionary<string, dynamic> coordP1 = p1["params"];
+            Dictionary<string, dynamic> coordP2 = p2["params"];
 
             int measure = Convert.ToInt32(Math.Sqrt(Math.Pow(coordP2["y"] - coordP1["y"], 2) + Math.Pow(coordP2["x"] - coordP1["x"], 2)));
 
@@ -130,12 +132,26 @@ namespace Interpreter
             }
             return result;
         }
-        public static void SavePath(Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
+
+        public static string SerialPath() {
+            DirectoryInfo BASE_DIR = new DirectoryInfo(
+                Assembly.GetAssembly(typeof (_Interpreter)).Location
+            ).Parent.Parent.Parent.Parent.Parent;
+
+            return System.IO.Path.Join(BASE_DIR.ToString(), "Serials");
+        }
+
+        public static string SerialFile(string filename) {
+            return System.IO.Path.Join(SerialPath(), $"{filename}.xaml");
+        }
+
+        public static string[] SerialFiles() {
+             return System.IO.Directory.GetFiles(SerialPath(), "*.xaml");
+        }
+
+        public static void SavePath(System.Windows.Shapes.Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
         {
-            string directorio = System.IO.Directory.GetCurrentDirectory();
-            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
-            // Define la ruta del archivo
-            string filePath = System.IO.Path.Combine(directorio, $"Serials\\{fileName}.xaml");
+            string filePath = SerialFile(fileName);
 
             // Crea un nuevo archivo
             using (var file = System.IO.File.Create(filePath)) { }
@@ -146,28 +162,22 @@ namespace Interpreter
         }
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
-            string directorio = System.IO.Directory.GetCurrentDirectory();
-            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
-            string directoryPath=System.IO.Path.Combine(directorio,"Serials\\");
-            // Obtiene todos los archivos XAML
-            string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
-
             // Deserializa y añade cada Path al Canvas
-            foreach (string filePath in filePaths)
-            {
-                var xaml = System.IO.File.ReadAllText(filePath);
-                Path path = (Path)XamlReader.Parse(xaml);
-                myCanvas.Children.Add(path);
+            try {
+                foreach (string filePath in SerialFiles())
+                {
+                    var xaml = System.IO.File.ReadAllText(filePath);
+                    System.Windows.Shapes.Path path = (System.Windows.Shapes.Path)XamlReader.Parse(xaml);
+                    myCanvas.Children.Add(path);
+                }
+            }
+            catch (Exception e) {
+                MessageBox.Show(e.ToString());
             }
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
         {
-            string directorio = System.IO.Directory.GetCurrentDirectory();
-            directorio = directorio.Substring(0, directorio.LastIndexOf("bin"));
-            string directoryPath = System.IO.Path.Combine(directorio, "Serials\\");
-            string[] filePaths = System.IO.Directory.GetFiles(directoryPath, "*.xaml");
-
-            foreach (var filepath in filePaths)
+            foreach (var filepath in SerialFiles())
             {
                 System.IO.File.Delete(filepath);
             }
@@ -180,7 +190,7 @@ namespace Interpreter
             {
                 case "point":
                     {
-                        Dictionary<string, float> parametros = figure["params"];
+                        Dictionary<string, dynamic> parametros = figure["params"];
                         return Utils.PointToGeometry(new Point(parametros["x"], parametros["y"]));
                     }
                 case "line":
@@ -188,9 +198,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -202,9 +212,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -216,9 +226,9 @@ namespace Interpreter
                         Dictionary<string, dynamic> puntos = figure["params"];
                         Dictionary<string, dynamic> p1 = puntos["p1"];
                         Dictionary<string, dynamic> p2 = puntos["p2"];
-                        Dictionary<string, float> coordP1 = p1["params"];
+                        Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, float> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p1["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -245,10 +255,10 @@ namespace Interpreter
                         Dictionary<string, dynamic> coord = centro["params"];
                         var center = new Point(coord["x"], coord["y"]);
                         Dictionary<string, dynamic> p2 = arc["p2"];
-                        Dictionary<string, float> coordP2 = p2["params"];
+                        Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         Dictionary<string, dynamic> p3 = arc["p3"];
-                        Dictionary<string, float> coordP3 = p3["params"];
+                        Dictionary<string, dynamic> coordP3 = p3["params"];
                         var punto3 = new Point(coordP3["x"], coordP3["y"]);
                         float measure = arc["measure"];
                     }; break;

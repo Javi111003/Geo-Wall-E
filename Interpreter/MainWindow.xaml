@@ -96,7 +96,6 @@
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Image x:Name="myImage" Source="C:\Users\javie\OneDrive\Documentos\GitHub\geo_walle\Interpreter\Images\build_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Build" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>
@@ -106,7 +105,6 @@
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Image x:Name="myImage" Source="C:\Users\javie\OneDrive\Documentos\GitHub\geo_walle\Interpreter\Images\run_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Run" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>

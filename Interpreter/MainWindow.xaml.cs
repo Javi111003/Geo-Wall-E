@@ -40,10 +40,16 @@ namespace Interpreter
         {
             Utils.ClearSerials();
             var retorno = EvalHandler.Eval(myTextBox.Text);
+<<<<<<< HEAD
             MessageBox.Show("The app is building");
+=======
+            MessageBox.Show("the app is building");
+            MessageBox.Show("Logs: " + retorno["console_log"]);
+>>>>>>> 5271d93f1076f29b8ed783c759109aefc54ea39f
             if (!(bool)retorno["success"]) 
             {
                 var errors = retorno["errors"];
+                MessageBox.Show(errors.ToString());
                 Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes";STATUS = false;
                 RunButton.IsEnabled=false;
             }
@@ -57,7 +63,13 @@ namespace Interpreter
         //Abrir área de dibujo
         private void Run_Click(object sender, RoutedEventArgs e)//Botón para  dibujar
         {
-            PaintingArea paintingArea = new PaintingArea();
+            PaintingArea paintingArea = null;
+            try {
+                 paintingArea = new PaintingArea();
+            }
+            catch (Exception a) {
+                MessageBox.Show(a.ToString());
+            }
             Utils.LoadAllPaths(paintingArea.MyCanvas);
             paintingArea.Show();
         }

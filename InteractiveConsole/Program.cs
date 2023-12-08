@@ -5,6 +5,7 @@ using Interpreter;
 class Master {
     static string msg = "H.U.L.K. REPL\nInterpreter version: 0.0.0\nREPL version: 0.0.0\n";
     
+    [STAThread]
     public static void Main(string[] args) {
 	Lexer lexer = null;
 	Parser parser = null;
