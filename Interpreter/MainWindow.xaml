@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:syntax="clr-namespace:UI.SyntaxBox;assembly=UI.SyntaxBox"
         
-        Title="GEO-WALL-E" Height="600" Width="800" Icon="C:\Users\javie\source\repos\WpfApp1\Images\posible_spash3.jpg" WindowStyle="ThreeDBorderWindow" WindowStartupLocation="CenterScreen" WindowState="Maximized" Cursor="Hand">
+        Title="GEO-WALL-E" Height="600" Width="800" WindowStyle="ThreeDBorderWindow" WindowStartupLocation="CenterScreen" WindowState="Maximized" Cursor="Hand">
 
     <Window.Resources>
         <Style x:Key="HoverButton" TargetType="Button">
@@ -97,7 +97,6 @@
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Image x:Name="myImage" Source="C:\Users\javie\source\repos\WpfApp1\Images\build_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Build" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>
@@ -107,7 +106,6 @@
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Image Source="C:\Users\javie\source\repos\WpfApp1\Images\run_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Run" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>

@@ -8,12 +8,12 @@ class Master {
     public static void Main(string[] args) {
 	Lexer lexer = null;
 	Parser parser = null;
-	Interpreter.Interpreter interpreter = null;
+	_Interpreter interpreter = null;
 	try {
 	    Console.Write(msg);
 	    lexer = new Lexer(";");
 	    parser = new Parser(lexer);
-	    interpreter = new Interpreter.Interpreter(parser);
+	    interpreter = new _Interpreter(parser);
 	}
 	catch (Exception e) {
 	    Console.WriteLine(e);

@@ -15,11 +15,11 @@ public class TestIntegration
         Assembly.GetAssembly(typeof (TestIntegration)).Location
     ).Parent.Parent.Parent.Parent;
 
-    public Interpreter.Interpreter _Prepare(string text) {
+    public _Interpreter _Prepare(string text) {
         Lexer lexer = new Lexer(text, debug:true);
         Parser parser = new Parser(lexer, debug:true);
 
-        return new Interpreter.Interpreter(parser);
+        return new _Interpreter(parser);
     }
 
     public dynamic _Interpret(string text) {

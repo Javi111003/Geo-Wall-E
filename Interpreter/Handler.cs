@@ -28,7 +28,7 @@ public static class EvalHandler {
         // explicit
         response["errors"] = null;
         response["success"] = true;
-        response["console_log"] = new Interpreter(parser).Interpret();
+        response["console_log"] = new _Interpreter(parser).Interpret();
 
         return response;
     }
