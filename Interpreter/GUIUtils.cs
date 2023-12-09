@@ -200,7 +200,7 @@ namespace Interpreter
                         Dictionary<string, dynamic> p2 = puntos["p2"];
                         Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, dynamic> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -214,7 +214,7 @@ namespace Interpreter
                         Dictionary<string, dynamic> p2 = puntos["p2"];
                         Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, dynamic> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
@@ -228,7 +228,7 @@ namespace Interpreter
                         Dictionary<string, dynamic> p2 = puntos["p2"];
                         Dictionary<string, dynamic> coordP1 = p1["params"];
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
-                        Dictionary<string, dynamic> coordP2 = p1["params"];
+                        Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
                         var line = new LineGeometry();
                         line.StartPoint = punto1;
