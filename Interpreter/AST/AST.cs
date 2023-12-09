@@ -1,6 +1,8 @@
 using System.Text;
 using System.Reflection;
 
+using Interpreter.Figures;
+
 namespace Interpreter;
 
 public class AST {
@@ -49,12 +51,22 @@ public class AST<T>: AST {
     public static HashSet<string> BoolOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING};
     public static HashSet<string> StrOp = new HashSet<string>{STRING};
     public static HashSet<string> SeqOp = new HashSet<string>{SEQUENCE};
+    public static HashSet<string> CircOp = new HashSet<string>{CIRCLE, ARC};
+    public static HashSet<string> LineOp = new HashSet<string>{LINE, RAY, SEGMENT};
+    public static HashSet<string> DynOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING, SEQUENCE, DYNAMIC};
 
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
         {FLOAT, FloatOp},
         {INTEGER, FloatOp},
         {BOOL, BoolOp},
         {STRING, StrOp},
+        {SEQUENCE, SeqOp},
+        {DYNAMIC, DynOp},
+        {CIRCLE, CircOp},
+        {ARC, CircOp},
+        {LINE, LineOp},
+        {SEGMENT, LineOp},
+        {RAY, LineOp},
     };
 
     public AST(string Type): base(Type) {}
@@ -68,11 +80,11 @@ public class AST<T>: AST {
         // this also means we don't care about the type (print)
         {DYNAMIC, typeof(object)},
         {SEQUENCE, typeof(Terms)},
-        {POINT, typeof(Point)},
-        {LINE, typeof(Line)},
-        {SEGMENT, typeof(Segment)},
-        {RAY, typeof(Ray)},
-        {ARC, typeof(Arc)}
+        {POINT, typeof(Figures.Point)},
+        {LINE, typeof(Figures.Line)},
+        {SEGMENT, typeof(Figures.Segment)},
+        {RAY, typeof(Figures.Ray)},
+        {ARC, typeof(Figures.Arc)}
     };
     public static Dictionary<Type, string> RevTypes = new Dictionary<Type, string>{
         {typeof(string), STRING},
@@ -82,12 +94,12 @@ public class AST<T>: AST {
         {typeof(object), DYNAMIC},
         {typeof(Terms), SEQUENCE},
         {typeof(SequenceLiteral), SEQUENCE},
-        {typeof(Point), POINT},
-        {typeof(Line), LINE},
-        {typeof(Segment), SEGMENT},
-        {typeof(Ray), RAY},
-        {typeof(Circle), CIRCLE},
-        {typeof(Arc), ARC}
+        {typeof(Figures.Point), POINT},
+        {typeof(Figures.Line), LINE},
+        {typeof(Figures.Segment), SEGMENT},
+        {typeof(Figures.Ray), RAY},
+        {typeof(Figures.Circle), CIRCLE},
+        {typeof(Figures.Arc), ARC}
     };
 
     public static string ToStr() {
@@ -104,6 +116,16 @@ public class VariableDeclaration: AST {
 
     public string name;
     public AST expression;
+    bool is_rest;
+
+    public bool IsRest {
+        get {
+            return is_rest;
+        }
+        set {
+            this.is_rest = value;
+        }
+    }
 
     public override string Type {
         get {
@@ -114,10 +136,17 @@ public class VariableDeclaration: AST {
     public VariableDeclaration(string name, AST expression) {
         this.name = name;
         this.expression = expression;
+        this.is_rest = true;
     }
 
     public override dynamic Eval(Context ctx) {
-        ctx[this.name] = this.expression.Eval(ctx);
+        //ctx[this.name] = this.expression.Eval(ctx);
+        var res = this.expression.Eval(ctx);
+        // could be this.expression.Type
+        if ((res is not null) && (!is_rest) && res.GetType() == typeof(SequenceLiteral)) {
+            res = res.Val().Eval(ctx);
+        }
+        ctx[this.name] = res;
         return null;
     }
 

@@ -45,7 +45,7 @@ public static class BestGuess {
 static class Settings {
 
     public static DirectoryInfo BASE_DIR = new DirectoryInfo(
-        Assembly.GetAssembly(typeof (Interpreter)).Location
+        Assembly.GetAssembly(typeof (_Interpreter)).Location
     ).Parent.Parent.Parent.Parent.Parent;
 
     public static DirectoryInfo PWD = new DirectoryInfo(Directory.GetCurrentDirectory());

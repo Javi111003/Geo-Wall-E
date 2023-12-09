@@ -4,9 +4,11 @@ namespace Interpreter;
 
 public class Literal<T>: AST<T> {
     protected T val;
+    public bool IsSequence;
 
     public Literal(T val): base(AST<T>.ToStr()){
         this.val = val;
+        this.IsSequence = false;
     }
 
     public T Val() {
@@ -171,29 +173,66 @@ public class Terms: AST {
             }
         }
         else {
-            str.Append($"{this.start}...");
+            str.Append($"{this.index + 1}...");
         }
         str.Append("}");
         return str.ToString();
     }
-
 }
 
 // block node... reimagined
 public class SequenceLiteral : Literal<Terms> {
 
-    public SequenceLiteral(Terms val): base(val) {}
+    public override string Type {
+        get {
+            return this.val.Type;
+        }
+    }
+
+    public SequenceLiteral(Terms val): base(val) {
+        this.IsSequence = true;
+    }
 
     public SequenceLiteral Clone() {
         return new SequenceLiteral(this.val.Clone());
     }
 
     public override dynamic Eval(Context ctx) {
+        if (!this.val.IsInfinite) {
+            var new_terms = new List<AST>();
+            var tp = this.Type;
+            foreach(AST ast in this.val) {
+                var lit = new Literal<dynamic>(ast.Eval(ctx));
+                lit.Type = tp;
+                new_terms.Add(new Literal<dynamic>(ast.Eval(ctx)));
+            }
+            this.val = new Terms(new_terms);
+        }
         return this;
     }
 
     public override string ToString() {
         return this.val.ToString();
+    }
+
+    public static SequenceLiteral operator+(SequenceLiteral x, SequenceLiteral y) {
+        var ls = new List<AST>();
+
+        if (x.Val().IsInfinite) {
+            return x.Clone();
+        }
+        else if (y.Val().IsInfinite) {
+            return y.Clone();
+        }
+
+        foreach(AST ast in x.Val()) {
+            ls.Add(ast);
+        }
+        foreach(AST ast in y.Val()) {
+            ls.Add(ast);
+        }
+
+        return new SequenceLiteral(new Terms(ls));
     }
 
     public override Exception Check() {

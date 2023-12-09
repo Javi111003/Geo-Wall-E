@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace Interpreter;
 
@@ -12,7 +13,7 @@ public class Lexer {
 
     public static HashSet<string> LITERALS = new HashSet<string>{Tokens.STRING, Tokens.INTEGER, Tokens.FLOAT, Tokens.SEQUENCE_START};
     public static HashSet<string> UNARY = new HashSet<string>{Tokens.MINUS, Tokens.NOT};
-    public static HashSet<string> CONDITIONALS = new HashSet<string>{Tokens.EQUALS, Tokens.HIGHER, Tokens.LOWER};
+    public static HashSet<string> CONDITIONALS = new HashSet<string>{Tokens.EQUALS, Tokens.HIGHER, Tokens.LOWER, Tokens.HIGHEREQUAL, Tokens.LOWEREQUAL};
     public static HashSet<string> OPERATIONS = new HashSet<string>{
         Tokens.MULT,
         Tokens.DIV,
@@ -127,7 +128,7 @@ public class Lexer {
         return Regex.Match(s, pattern).Success;
     }
 
-    // 
+    
 
     public string GetResult(Func<string, bool> condition) {
         StringBuilder result = new StringBuilder();
@@ -224,7 +225,7 @@ public class Lexer {
                 this.GetResult((string s) => s == " ");
                 continue;
             }
-            else if (this.current_char[0] == '\n') {
+            else if (this.current_char[0] == '\n' || this.current_char[0] == '\r') {
                 this.Advance();
                 continue;
             }
@@ -265,6 +266,14 @@ public class Lexer {
                 return this.GetNextToken();
             }
 
+            if (token_repr == "//")//Es un comentario por tanto se ignora el resto de la lú‹ea
+            {
+                while (current_char != "\n") 
+                { this.Advance();
+                    return GetNextToken();
+                }
+            }
+
             // special handling for composite tokens
             for (int i = 0; i < token_repr.Length; i++) {
                 this.Advance();
@@ -274,7 +283,7 @@ public class Lexer {
         }
         return new Token(Tokens.EOF, null, this.Line, this.column);
     }
-    private Token[] FetchAllTokens()
+    public Token[] GetAllTokens()
     {
         List<Token> tokens = new List<Token>();
         while (this.current_char != "") {
@@ -313,20 +322,5 @@ public class Lexer {
         }
         tokens.Add(new Token(Tokens.EOF));
         return tokens.ToArray();
-    }
-
-    public Token[] GetAllTokens() {
-        Token[] tokens = null;
-        try {
-            tokens = this.FetchAllTokens();
-        }
-        catch (Exception e){
-            this.LastError = (e.ToString(), this.ErrorMessage());
-            if (this.debug) {
-                throw e;
-            }
-            return null;
-        }
-        return tokens;
     }
 }

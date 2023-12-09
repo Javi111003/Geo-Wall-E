@@ -65,7 +65,7 @@ public class TestLexer
         Lexer l = new Lexer("if 0 then \"blob\" else \"doko\"");
         Assert.Equal(l.GetNextToken(), new Token(Tokens.IF, "if"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.INTEGER, "0"));
-        l.GetNextToken();
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.THEN, "then"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "blob"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.ELSE, "else"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.STRING, "doko"));
@@ -121,6 +121,15 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.RESTORE, "restore"));
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
+    }
+
+    [Fact]
+    public void TestHL()
+    {
+        Lexer l = new Lexer(">= 1 <= 2");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.HIGHEREQUAL, ">="));
+        l.GetNextToken();
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.LOWEREQUAL, "<="));
     }
 
 }

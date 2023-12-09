@@ -12,6 +12,7 @@ public abstract class BinaryOperation<T, R>: AST<R> {
 
     public override dynamic Eval(Context ctx) {
         // ValidateArgs -> See Type and check if they are valid before eval
+
         try {
             return this.Operation(this.left.Eval(ctx), this.right.Eval(ctx));
         }
@@ -48,8 +49,15 @@ public class Sum : BinaryOperation<float, float> {
 
     public Sum(AST left, AST right): base(left, right) {}
 
+    public override dynamic Eval(Context ctx) {
+        return this.Operation(this.left.Eval(ctx), this.right.Eval(ctx));
+    }
    
     public override float Operation(float a, float b) {
+        return a + b;
+    }
+
+    public SequenceLiteral Operation(SequenceLiteral a, SequenceLiteral b) {
         return a + b;
     }
 }

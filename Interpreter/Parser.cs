@@ -9,6 +9,7 @@ public class Parser {
     Lexer lexer;
     Token current_token;
 
+
     Token[] tokens;
     int index;
 
@@ -37,6 +38,8 @@ public class Parser {
         new SamplesDecl(),
         new ColorDecl(),
         new RestoreDecl(),
+        new MeasureDecl(),
+        new DrawDecl(),
     };
 
     // serialize errors
@@ -76,15 +79,17 @@ public class Parser {
    }
 
    public Token Peek(int steps = 1) {
-       if (this.index < 0 || (this.index > this.tokens.Length)) {
+       if (this.index < 0 || (this.index >= this.tokens.Length - steps)) {
            // return EOF so it doesn't match anything (except, maybe ending whatever loop is using peek)
            return new Token(Tokens.EOF);
        }
        return this.tokens[this.index + steps];
    }
 
-   public string ErrorMessage() {
+   public string ErrorMessage(Exception e) {
         string msg = $"Error parsing line {this.current_token.Line} col {this.current_token.column}";
+        msg += '\n'.ToString();
+        msg += e.ToString();
         msg += '\n'.ToString();
         msg += this.lexer.LastLine;
         msg += '\n'.ToString();
@@ -98,11 +103,14 @@ public class Parser {
    }
 
     public void Error(Exception exception) {
-        string msg = this.ErrorMessage();
+        string msg = this.ErrorMessage(exception);
         this.LastError = (exception.ToString(), msg);
 
-        Console.WriteLine(msg);
-        throw exception;
+        Exception child = (Exception) Activator.CreateInstance(
+            exception.GetType(),
+            msg
+        );
+        throw child;
     }
 
     public void Eat(string token_type) {
@@ -195,6 +203,67 @@ public class Parser {
         return node;
     }
 
+    public List<AST> ToArgs(string type) {
+        // convert from **kwargs to *args
+        if (type == "point") {
+            var metadata = HandlerUI.GetPoint();
+            var param = metadata["params"];
+
+            return new List<AST>{
+                new FloatLiteral(param["x"]), 
+                new FloatLiteral(param["y"])
+            };
+        }
+        else if (new HashSet<string>{"line", "ray", "segment"}.Contains(type)) {
+            var metadata = HandlerUI.GetLine();
+            var param = metadata["params"];
+
+            return new List<AST>{
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p1"])
+                 ),
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p1"])
+                )
+            };
+        }
+        else if (type == "circle") {
+            var metadata = HandlerUI.GetCircle();
+            var param = metadata["params"];
+
+            return new List<AST>{
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["center"])
+                 ),
+                new FloatLiteral(
+                    param["radius"]
+                )
+            };
+        }
+        else if (type == "arc") {
+            var metadata = HandlerUI.GetArc();
+            var param = metadata["params"];
+            return new List<AST>{
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["center"])
+                 ),
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p2"])
+                 ),
+                new Literal<Figures.Point>(
+                    new Figures.Point(param["p3"])
+                ),
+                new FloatLiteral(
+                    param["measure"]
+                )
+            };
+        }
+        else {
+            Console.WriteLine($"WARNING: Could not determine type for {type}");
+            return new List<AST>();
+        }
+    }
+
     protected (string, string?) DeclareFirst(List<AST> variables, List<string> names) {
         // helper function to declare a variable
         // the first time it can have a type before the name 
@@ -230,11 +299,11 @@ public class Parser {
             // [type] [name]; is translated to name = type()
             // where type is a function
             // thus
-            // XXX call handla
+            //
 
             Function fun = this.FunctionCall(
                 type,
-                new BlockNode(new List<AST>{new IntLiteral(0), new IntLiteral(0)})
+                new BlockNode(this.ToArgs(type))
             );
             val = fun;
 
@@ -263,6 +332,7 @@ public class Parser {
 
 
         AST val = null;
+        // multi variable declaration
         while (this.current_token.type == Tokens.COMMA) {
             this.Eat(Tokens.COMMA);
             name = this.current_token.val;
@@ -300,25 +370,13 @@ public class Parser {
         // one we can't do this; hence the null check
         // don't worry about the first one not being taken into account--the list with
         // all variables is passed to the function handling the special case (DeclareFirst)
-        if (!(val is null) && (val.Type == AST<object>.SEQUENCE)) {
-            SequenceLiteral seq = (SequenceLiteral) val;
-            var sequence = seq.Clone();
-
-            // we pass the reference to all the variables so when they are evaluated
-            // we modify the index @ Sequence.val and give a different value each time
-            Terms term = sequence.Val();
-            int counter = 0;
+        if ((val is not null)) {
             foreach(VariableDeclaration item in variables) {
-                if (counter == (variables.Count() - 1)) {
-                    // minus the last one
-                    // pass a reference to the cloned sequence to the last var
-                    item.expression = sequence;
-                    break;
-                }
-                // reference to the term that will return a literal when evaluated
-                item.expression = term;
-                counter += 1;
+                item.expression = val;
+                item.IsRest = false;
             }
+            var rest = (VariableDeclaration) variables[variables.Count() - 1];
+            rest.IsRest = true;
         }
 
         BlockNode multi_decl = new BlockNode(variables);
@@ -406,13 +464,6 @@ public class Parser {
             // finite
             this.Eat(Tokens.COMMA);
             AST item = this.Expr();
-            if (item.Type != Type || item.Type == "DYNAMIC" || first.Type == "DYNAMIC") {
-                this.Error(
-                    new TypeError(
-                        $"Inconsistent types of elements for secuence. Expected {Type} found {item.Type}"
-                    )
-                );
-            }
             items.Add(item);
         }
 
@@ -580,6 +631,14 @@ public class Parser {
                 this.Eat(Tokens.LOWER);
                 ast = typeof(Lower);
             }
+            else if (token.type == Tokens.HIGHEREQUAL) {
+                this.Eat(Tokens.HIGHEREQUAL);
+                ast = typeof(HigherEqual);
+            }
+            else if (token.type == Tokens.LOWEREQUAL) {
+                this.Eat(Tokens.LOWEREQUAL);
+                ast = typeof(LowerEqual);
+            }
             else {
                 this.Error(new SyntaxError($"Unknown operand: {token.type}"));
             }
@@ -596,7 +655,10 @@ public class Parser {
             this.Eat(Tokens.DRAW);
             var args = this.Expr();
             // string
-            AST label = this.LiteralNode();
+            AST label = new AST();
+            if (this.current_token.type == Tokens.STRING) {
+                label = this.LiteralNode();
+            }
             return this.FunctionCall(name, new BlockNode(new List<AST>{args, label}));
         }
         else if (name == "color") {
@@ -689,19 +751,7 @@ public class Parser {
         AST node = null;
 
         while (this.current_token.type != Tokens.EOF) {
-            try {
-                node = this.ParseNode();
-            }
-            catch (Exception e) {
-                if (this.LastError.Item1 is null) {
-                    this.LastError = (e.ToString(), this.ErrorMessage());
-                }
-                throw e;
-                if (this.debug) {
-                    throw e;
-                }
-                return null;
-            }
+            node = this.ParseNode();
             this.Eat(Tokens.END);
             nodes.Add(node);
         }

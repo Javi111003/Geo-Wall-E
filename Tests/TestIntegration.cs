@@ -5,6 +5,7 @@ using System.Reflection;
 using Xunit;
 
 using Interpreter;
+using Interpreter.Figures;
 
 namespace Tests;
 
@@ -14,11 +15,11 @@ public class TestIntegration
         Assembly.GetAssembly(typeof (TestIntegration)).Location
     ).Parent.Parent.Parent.Parent;
 
-    public Interpreter.Interpreter _Prepare(string text) {
+    public _Interpreter _Prepare(string text) {
         Lexer lexer = new Lexer(text, debug:true);
         Parser parser = new Parser(lexer, debug:true);
 
-        return new Interpreter.Interpreter(parser);
+        return new _Interpreter(parser);
     }
 
     public dynamic _Interpret(string text) {
@@ -296,8 +297,8 @@ public class TestIntegration
 
     [Fact]
     public void TestIntersect() {
-        var result = this._Interpret("p1 = point(0, 1); p2 = point(1, 0);p3 = point(0, 0);intersect(line(p3, p1), line(p3, p2));");
-        Assert.Equal("{<Point(0, 0)>, }", result.ToString());
+        var result = this._Interpret("p1 = point(0, 1); p2 = point(1, 0);p3 = point(0, 0);count(intersect(line(p3, p1), line(p3, p2)));");
+        Assert.Equal(1, result);
     }
 
     [Fact]
@@ -314,8 +315,8 @@ public class TestIntegration
 
     [Fact]
     public void TestPoints() {
-        var result = this._Interpret("points(line(point(0,0), point(0,1)));");
-        Assert.Equal("{<Point(1, 1)>, }", result.ToString());
+        var result = this._Interpret("count(points(line(point(0,0), point(0,1))));");
+        Assert.Equal(1, result);
     }
 
     [Fact]
@@ -344,5 +345,51 @@ public class TestIntegration
         // the first Lexer(Circular.geo) doesn't know his own name
         // so it can't skip importing himself at least once
         Assert.Equal(5, result);
+    }
+
+    [Fact]
+    public void TestMeasure() {
+        var result = this._Interpret("measure(point(0, 0), point(0, 5));");
+        Assert.Equal((float) 5, (float) result);
+    }
+
+    [Fact]
+    public void TestSeq2() {
+        var result = this._Interpret("a = {1,2,3};c, rest = a; c;");
+        Assert.Equal((float) 1, (float) result);
+    }
+
+    [Fact]
+    public void TestSeqSum() {
+        var result = this._Interpret("a = {1,2,3};b={4};a+b;");
+        Assert.Equal("{1, 2, 3, 4, }", result.ToString());
+    }
+
+    [Fact]
+    public void TestSeqSumInf() {
+        var result = this._Interpret("a = {1,2,3};b={1...};a+b;");
+        Assert.Equal("{1...}", result.ToString());
+    }
+
+    [Fact]
+    public void TestSeqInverted() {
+        var result = this._Interpret("a = {1,2,3};b={4};b+a;");
+        Assert.Equal("{4, 1, 2, 3, }", result.ToString());
+    }
+
+
+    [Fact]
+    public void TestHL() {
+        var result = this._Interpret("1 >= 1;");
+        Assert.Equal("True", result.ToString());
+
+        result = this._Interpret("1 <= 1;");
+        Assert.Equal("True", result.ToString());
+    }
+
+    [Fact]
+    public void TestSeqEval() {
+         var result = this._Interpret("f() = let x = 5; in {x};f();");
+         Assert.Equal("{5, }", result.ToString());
     }
 }

@@ -1,13 +1,13 @@
 namespace Interpreter;
 
 
-public class Interpreter {
+public class _Interpreter {
     public Context GLOBAL_SCOPE = new Context();
     public Parser parser;
     public AST _tree;
     public static BlockNode BUILTINS = new BlockNode(Parser.BUILTINS);
 
-    public Interpreter(Parser parser) {
+    public _Interpreter(Parser parser) {
         this.parser = parser;
         this._tree = null;
 
