@@ -26,6 +26,9 @@
 
   <ItemGroup>
       <Resource Include="posible_spash3.jpg" />
+	  <Resource Include="present2.jpg" />
+	  <Resource Include="build_icon.jpg" />
+	  <Resource Include="run_icon.jpg" />
   </ItemGroup>
 
 </Project>
