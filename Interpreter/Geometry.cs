@@ -335,12 +335,10 @@ namespace Interpreter {
         }
 
         public override dynamic Eval(Context ctx) {
-            if (this.block.Type == AST<object>.SEQUENCE) {
-                SequenceLiteral seq = (SequenceLiteral) this.block;
+            var block = this.block.Eval(ctx);
+            if (block.GetType() == typeof(SequenceLiteral)) {
+                SequenceLiteral seq = (SequenceLiteral) block;
                 foreach(AST ast in seq.Val()) {
-                    if (ast.Type == AST<object>.INTEGER) {
-                        throw new TypeError("An integer is not drawable");
-                    }
                     Drawable fig = (Drawable) ast.Eval(ctx);
                     this.Operation(fig);
                 }

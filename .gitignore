@@ -14,4 +14,4 @@
 *.sln
 #lut
 *.lutconfig
-Serials/
+Serials/*.xaml

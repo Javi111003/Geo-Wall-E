@@ -13,7 +13,7 @@ public class Lexer {
 
     public static HashSet<string> LITERALS = new HashSet<string>{Tokens.STRING, Tokens.INTEGER, Tokens.FLOAT, Tokens.SEQUENCE_START};
     public static HashSet<string> UNARY = new HashSet<string>{Tokens.MINUS, Tokens.NOT};
-    public static HashSet<string> CONDITIONALS = new HashSet<string>{Tokens.EQUALS, Tokens.HIGHER, Tokens.LOWER};
+    public static HashSet<string> CONDITIONALS = new HashSet<string>{Tokens.EQUALS, Tokens.HIGHER, Tokens.LOWER, Tokens.HIGHEREQUAL, Tokens.LOWEREQUAL};
     public static HashSet<string> OPERATIONS = new HashSet<string>{
         Tokens.MULT,
         Tokens.DIV,

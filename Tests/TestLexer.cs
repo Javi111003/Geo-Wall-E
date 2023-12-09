@@ -123,4 +123,13 @@ public class TestLexer
         Assert.Equal(l.GetNextToken(), new Token(Tokens.END, ";"));
     }
 
+    [Fact]
+    public void TestHL()
+    {
+        Lexer l = new Lexer(">= 1 <= 2");
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.HIGHEREQUAL, ">="));
+        l.GetNextToken();
+        Assert.Equal(l.GetNextToken(), new Token(Tokens.LOWEREQUAL, "<="));
+    }
+
 }

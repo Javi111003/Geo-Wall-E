@@ -51,12 +51,15 @@ public class AST<T>: AST {
     public static HashSet<string> BoolOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING};
     public static HashSet<string> StrOp = new HashSet<string>{STRING};
     public static HashSet<string> SeqOp = new HashSet<string>{SEQUENCE};
+    public static HashSet<string> DynOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING, SEQUENCE, DYNAMIC};
 
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
         {FLOAT, FloatOp},
         {INTEGER, FloatOp},
         {BOOL, BoolOp},
         {STRING, StrOp},
+        {SEQUENCE, SeqOp},
+        {DYNAMIC, DynOp}
     };
 
     public AST(string Type): base(Type) {}
@@ -106,6 +109,16 @@ public class VariableDeclaration: AST {
 
     public string name;
     public AST expression;
+    bool is_rest;
+
+    public bool IsRest {
+        get {
+            return is_rest;
+        }
+        set {
+            this.is_rest = value;
+        }
+    }
 
     public override string Type {
         get {
@@ -116,10 +129,17 @@ public class VariableDeclaration: AST {
     public VariableDeclaration(string name, AST expression) {
         this.name = name;
         this.expression = expression;
+        this.is_rest = true;
     }
 
     public override dynamic Eval(Context ctx) {
-        ctx[this.name] = this.expression.Eval(ctx);
+        //ctx[this.name] = this.expression.Eval(ctx);
+        var res = this.expression.Eval(ctx);
+        // could be this.expression.Type
+        if ((res is not null) && (!is_rest) && res.GetType() == typeof(SequenceLiteral)) {
+            res = res.Val().Eval(ctx);
+        }
+        ctx[this.name] = res;
         return null;
     }
 

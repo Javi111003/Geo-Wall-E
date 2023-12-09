@@ -106,8 +106,11 @@ public class Parser {
         string msg = this.ErrorMessage(exception);
         this.LastError = (exception.ToString(), msg);
 
-        Console.WriteLine(msg);
-        throw exception;
+        Exception child = (Exception) Activator.CreateInstance(
+            exception.GetType(),
+            msg
+        );
+        throw child;
     }
 
     public void Eat(string token_type) {
@@ -329,6 +332,7 @@ public class Parser {
 
 
         AST val = null;
+        // multi variable declaration
         while (this.current_token.type == Tokens.COMMA) {
             this.Eat(Tokens.COMMA);
             name = this.current_token.val;
@@ -366,25 +370,13 @@ public class Parser {
         // one we can't do this; hence the null check
         // don't worry about the first one not being taken into account--the list with
         // all variables is passed to the function handling the special case (DeclareFirst)
-        if (!(val is null) && (val.Type == AST<object>.SEQUENCE)) {
-            SequenceLiteral seq = (SequenceLiteral) val;
-            var sequence = seq.Clone();
-
-            // we pass the reference to all the variables so when they are evaluated
-            // we modify the index @ Sequence.val and give a different value each time
-            Terms term = sequence.Val();
-            int counter = 0;
+        if ((val is not null)) {
             foreach(VariableDeclaration item in variables) {
-                if (counter == (variables.Count() - 1)) {
-                    // minus the last one
-                    // pass a reference to the cloned sequence to the last var
-                    item.expression = sequence;
-                    break;
-                }
-                // reference to the term that will return a literal when evaluated
-                item.expression = term;
-                counter += 1;
+                item.expression = val;
+                item.IsRest = false;
             }
+            var rest = (VariableDeclaration) variables[variables.Count() - 1];
+            rest.IsRest = true;
         }
 
         BlockNode multi_decl = new BlockNode(variables);
@@ -645,6 +637,14 @@ public class Parser {
             else if (token.type == Tokens.LOWER) {
                 this.Eat(Tokens.LOWER);
                 ast = typeof(Lower);
+            }
+            else if (token.type == Tokens.HIGHEREQUAL) {
+                this.Eat(Tokens.HIGHEREQUAL);
+                ast = typeof(HigherEqual);
+            }
+            else if (token.type == Tokens.LOWEREQUAL) {
+                this.Eat(Tokens.LOWEREQUAL);
+                ast = typeof(LowerEqual);
             }
             else {
                 this.Error(new SyntaxError($"Unknown operand: {token.type}"));

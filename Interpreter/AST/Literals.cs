@@ -4,9 +4,11 @@ namespace Interpreter;
 
 public class Literal<T>: AST<T> {
     protected T val;
+    public bool IsSequence;
 
     public Literal(T val): base(AST<T>.ToStr()){
         this.val = val;
+        this.IsSequence = false;
     }
 
     public T Val() {
@@ -171,7 +173,7 @@ public class Terms: AST {
             }
         }
         else {
-            str.Append($"{this.start}...");
+            str.Append($"{this.index + 1}...");
         }
         str.Append("}");
         return str.ToString();
@@ -179,9 +181,17 @@ public class Terms: AST {
 }
 
 // block node... reimagined
-public class SequenceLiteral : Literal<Terms>, Drawable {
+public class SequenceLiteral : Literal<Terms> {
 
-    public SequenceLiteral(Terms val): base(val) {}
+    public override string Type {
+        get {
+            return this.val.Type;
+        }
+    }
+
+    public SequenceLiteral(Terms val): base(val) {
+        this.IsSequence = true;
+    }
 
     public SequenceLiteral Clone() {
         return new SequenceLiteral(this.val.Clone());
@@ -195,6 +205,26 @@ public class SequenceLiteral : Literal<Terms>, Drawable {
         return this.val.ToString();
     }
 
+    public static SequenceLiteral operator+(SequenceLiteral x, SequenceLiteral y) {
+        var ls = new List<AST>();
+
+        if (x.Val().IsInfinite) {
+            return x.Clone();
+        }
+        else if (y.Val().IsInfinite) {
+            return y.Clone();
+        }
+
+        foreach(AST ast in x.Val()) {
+            ls.Add(ast);
+        }
+        foreach(AST ast in y.Val()) {
+            ls.Add(ast);
+        }
+
+        return new SequenceLiteral(new Terms(ls));
+    }
+
     public override Exception Check() {
         return this.val.Check();
     }
@@ -202,19 +232,6 @@ public class SequenceLiteral : Literal<Terms>, Drawable {
     public IEnumerator<AST> GetEnumerator() {
         // convenience method
         return this.val.GetEnumerator();
-    }
-
-    public Dictionary<string, dynamic> GetDrawParams() {
-        List<Dictionary<string, dynamic>> ls = new List<Dictionary<string, dynamic>>();
-
-        foreach(Drawable fig in this.Val()) {
-            ls.Add(fig.GetDrawParams());
-        }
-
-        return new Dictionary<string, dynamic> {
-            {"type", "sequence"},
-            {"params", ls},
-        };
     }
 }
 
