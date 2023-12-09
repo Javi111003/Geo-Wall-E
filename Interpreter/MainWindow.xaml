@@ -92,11 +92,12 @@
                 </syntax:SyntaxBox.SyntaxDrivers>
             </TextBox>
             <!-- Botones para compilar y ejecutar -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="650,10,0,10" Grid.Column="1" Width="77">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="650,10,0,10" Grid.Column="1" Width="120">
                 <Button Name="BuildButton" Style="{StaticResource HoverButton}" Content="Build" Click="Build_Click" Margin="0,0,10,0">
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
+                                <Image Source="/build_icon.jpg" Width="16" Height="16"/>
                                 <TextBlock Text="Build" Margin="5,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>
@@ -106,7 +107,8 @@
                     <Button.Template>
                         <ControlTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Run" Margin="5,0,0,0"/>
+                                <Image Source="/run_icon.jpg" Width="16" Height="16"/>
+                                <TextBlock Text="Run" Margin="10,0,0,0"/>
                             </StackPanel>
                         </ControlTemplate>
                     </Button.Template>
