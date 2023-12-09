@@ -73,6 +73,10 @@ namespace Interpreter
             Utils.LoadAllPaths(paintingArea.MyCanvas);
             paintingArea.Show();
         }
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            RunButton.IsEnabled = false;
+        }
 
         #region Lógica de Menú Archivo
         private void NewFile(object sender, RoutedEventArgs e)

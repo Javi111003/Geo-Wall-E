@@ -67,7 +67,7 @@
                 <RowDefinition Height="60"/>
             </Grid.RowDefinitions>
             <!-- Área de texto para el código -->
-            <TextBox Grid.Row="0" Grid.Column="1" x:Name="myTextBox" 
+            <TextBox TextChanged="TextBox_TextChanged" Grid.Row="0" Grid.Column="1" x:Name="myTextBox" 
          syntax:SyntaxBox.Enable="True" 
          syntax:SyntaxBox.ExpandTabs="True" 
          syntax:SyntaxBox.AutoIndent="True" 
