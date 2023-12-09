@@ -17,7 +17,11 @@ Funciona en: Windows.
 ## Guía rápida
 1. 
 
-\geo_walle:dotnet run
+\geo_walle\Interpreter:dotnet run
+
+2. 
+
+\Interpreter\bin\Debug\net6.0-windows\GeoWallE.exe
 
 ## Testing
 ```
