@@ -61,9 +61,10 @@
                 <ColumnDefinition Width="759*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="100"/>
+                <RowDefinition/>
+                <RowDefinition Height="Auto" MinHeight="35.96"/>
+                <RowDefinition Height="26"/>
+                <RowDefinition Height="60"/>
             </Grid.RowDefinitions>
             <!-- Área de texto para el código -->
             <TextBox Grid.Row="0" Grid.Column="1" x:Name="myTextBox" 
@@ -91,7 +92,7 @@
                 </syntax:SyntaxBox.SyntaxDrivers>
             </TextBox>
             <!-- Botones para compilar y ejecutar -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="650,10,0,10" Grid.Column="1">
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left" Margin="650,10,0,10" Grid.Column="1" Width="77">
                 <Button Name="BuildButton" Style="{StaticResource HoverButton}" Content="Build" Click="Build_Click" Margin="0,0,10,0">
                     <Button.Template>
                         <ControlTemplate>
@@ -112,15 +113,9 @@
                 </Button>
             </StackPanel>
             <!-- Lista de errores -->
-            <ListBox x:Name="ErrorsList" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,36,0,0" Grid.RowSpan="2">
-                <Label Foreground="DarkRed" HorizontalAlignment="Left" FontSize="12" FontWeight="Heavy" FontStyle="Normal" Content="Lista de errores:">
-                </Label>
-                <ListBoxItem Content="{Binding Path=MensajeError ,Mode=OneWay}"></ListBoxItem>
-                <ListBoxItem>Error 2</ListBoxItem>
-                <ListBoxItem>Error 3</ListBoxItem>
-                <ListBoxItem>Error 4</ListBoxItem>
-                <ListBoxItem>Error 5</ListBoxItem>
-            </ListBox>
+            <Label Grid.Row="1" Grid.Column="1" Foreground="DarkRed" HorizontalAlignment="Left" FontSize="12" FontWeight="Heavy" FontStyle="Normal" Content="Lista de errores:" Margin="0,36,0,0" Grid.RowSpan="2" Width="105">
+            </Label>
+            <ListBox Name="ErrorsList" Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" Height="55"/>
         </Grid>
     </DockPanel>
 

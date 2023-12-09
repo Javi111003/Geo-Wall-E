@@ -45,7 +45,7 @@ namespace Interpreter
         private void DrawPoint(object sender,RoutedEventArgs e)
         {
             //[1] = {5.667755461688932,5005.276715992176}
-            var point = new Point(5.667755461688932, 50.276715992176);
+            var point = new Point(0,0);
             Path myPath = new Path();
             myPath.Stroke = Utils.COLORS.Peek();
             myPath.Fill = Utils.COLORS.Peek();

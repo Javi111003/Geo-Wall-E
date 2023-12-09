@@ -30,10 +30,10 @@ namespace Interpreter
         public MainWindow()
         {
             InitializeComponent();
-            Utils.COLORS=new();Utils.COLORS.Push(Brushes.Black);
+            Utils.COLORS=new();Utils.SelectColor("black");
             Status.Text = "Estado: Listo";
             Status.Foreground = Brushes.Green;
-            RunButton.IsEnabled = true;
+            RunButton.IsEnabled = false;           
         }
 
         private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
@@ -41,16 +41,20 @@ namespace Interpreter
             Utils.ClearSerials();
             var retorno = EvalHandler.Eval(myTextBox.Text);
             MessageBox.Show("the app is building");
+            List<string> Errors = new();
             MessageBox.Show("Logs: " + retorno["console_log"]);
             if (!(bool)retorno["success"]) 
             {
-                var errors = retorno["errors"];
-                MessageBox.Show(errors.ToString());
+                var error = (Exception)retorno["errors"];
+                Errors.Add(error.Message);
+                ErrorsList.ItemsSource = Errors;
                 Status.Foreground = Brushes.Red; Status.Text = "Estado : Errores pendientes";STATUS = false;
                 RunButton.IsEnabled=false;
             }
             else
             {
+                Errors.Clear();
+                ErrorsList.ItemsSource = null;
                 RunButton.IsEnabled= true;
                 STATUS = true;Status.Text = "Estado: Listo";Status.Foreground = Brushes.Green;
             }
