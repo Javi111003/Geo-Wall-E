@@ -389,7 +389,7 @@ public class TestIntegration
 
     [Fact]
     public void TestSeqEval() {
-         var result = this._Interpret("f() = let x = 5; in {x};");
+         var result = this._Interpret("f() = let x = 5; in {x};f();");
          Assert.Equal("{5, }", result.ToString());
     }
-
+}
