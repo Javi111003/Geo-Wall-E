@@ -43,8 +43,8 @@
                 <mah:HamburgerMenu Grid.Column="0" Grid.Row="0" Content="Hola">
                 </mah:HamburgerMenu>
             </DockPanel>
-            <ScrollViewer Grid.Row="1" Grid.Column="1" Margin="35" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Opacity="0.6" VerticalAlignment="Bottom" Grid.IsSharedSizeScope="True" CanContentScroll="True">
-                <Canvas Name="MyCanvas" Width="2000" Height="2000" Grid.Column="1" Grid.Row="1">
+            <ScrollViewer Name="scrollBars" Grid.Row="1" Grid.Column="1" Margin="35" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Opacity="0.6" VerticalAlignment="Bottom" Grid.IsSharedSizeScope="True" CanContentScroll="True">
+                <Canvas Name="MyCanvas" Width="2000" Height="2000" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Canvas.Background>
                         <DrawingBrush TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
                             <DrawingBrush.Drawing>

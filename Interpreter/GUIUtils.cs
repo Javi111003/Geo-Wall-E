@@ -19,7 +19,7 @@ namespace Interpreter
 {
     public static class Utils//Encapsula métodos auxiliares
     {
-        public static Stack<Brush> COLORS = new Stack<Brush>(new Brush[]{Brushes.Blue});
+        public static Stack<Brush> COLORS = new Stack<Brush>(new Brush[]{Brushes.Black});
 
         public static Dictionary<string,dynamic>[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
