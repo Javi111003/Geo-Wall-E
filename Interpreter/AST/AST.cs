@@ -51,6 +51,8 @@ public class AST<T>: AST {
     public static HashSet<string> BoolOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING};
     public static HashSet<string> StrOp = new HashSet<string>{STRING};
     public static HashSet<string> SeqOp = new HashSet<string>{SEQUENCE};
+    public static HashSet<string> CircOp = new HashSet<string>{CIRCLE, ARC};
+    public static HashSet<string> LineOp = new HashSet<string>{LINE, RAY, SEGMENT};
     public static HashSet<string> DynOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING, SEQUENCE, DYNAMIC};
 
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
@@ -59,7 +61,12 @@ public class AST<T>: AST {
         {BOOL, BoolOp},
         {STRING, StrOp},
         {SEQUENCE, SeqOp},
-        {DYNAMIC, DynOp}
+        {DYNAMIC, DynOp},
+        {CIRCLE, CircOp},
+        {ARC, CircOp},
+        {LINE, LineOp},
+        {SEGMENT, LineOp},
+        {RAY, LineOp},
     };
 
     public AST(string Type): base(Type) {}

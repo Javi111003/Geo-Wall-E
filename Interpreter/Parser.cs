@@ -464,13 +464,6 @@ public class Parser {
             // finite
             this.Eat(Tokens.COMMA);
             AST item = this.Expr();
-            if (item.Type != Type || item.Type == "DYNAMIC" || first.Type == "DYNAMIC") {
-                this.Error(
-                    new TypeError(
-                        $"Inconsistent types of elements for secuence. Expected {Type} found {item.Type}"
-                    )
-                );
-            }
             items.Add(item);
         }
 

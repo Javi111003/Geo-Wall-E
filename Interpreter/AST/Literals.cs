@@ -198,6 +198,16 @@ public class SequenceLiteral : Literal<Terms> {
     }
 
     public override dynamic Eval(Context ctx) {
+        if (!this.val.IsInfinite) {
+            var new_terms = new List<AST>();
+            var tp = this.Type;
+            foreach(AST ast in this.val) {
+                var lit = new Literal<dynamic>(ast.Eval(ctx));
+                lit.Type = tp;
+                new_terms.Add(new Literal<dynamic>(ast.Eval(ctx)));
+            }
+            this.val = new Terms(new_terms);
+        }
         return this;
     }
 
