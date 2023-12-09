@@ -29,13 +29,8 @@
                 </DockPanel.Background>
                 <ToolBarPanel DockPanel.Dock="Left" Width="100">
 
-                    <ToolBar x:Name="Figures" Header="FIGURES">
-                        <Button Content="Segment" Click="DrawSegment"/>
-                        <Button Content="Circle" Click="DrawCircle"/>
-                        <Button Content="Arc" Click="DrawArc"/>
-                        <Button Content="Line" Click="DrawLine"/>
-                        <Button Content="Ray" Click="DrawRay"/>
-                        <Button Content="Point" Click="DrawPoint"/>
+                    <ToolBar x:Name="Restore" Header="RESTORE">
+                        <Button Content="All Figures" Click="DrawFigures"/>
                     </ToolBar>
                     <Button Content="Clear" Click="ClearCanvas"></Button>
                 </ToolBarPanel>
