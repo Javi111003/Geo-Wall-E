@@ -20,6 +20,9 @@ public class Literal<T>: AST<T> {
     }
 
     public override string ToString() {
+        if (this.val is null) {
+            return "";
+        }
         return this.val.ToString();
     }
 

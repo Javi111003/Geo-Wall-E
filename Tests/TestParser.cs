@@ -102,7 +102,7 @@ public class TestParser
 
     [Fact]
     public void TestRecursiveTypeCheck() {
-        var result = (BlockNode) this.Prepare(@"
+        Assert.Throws<TypeError>(delegate {this.Prepare(@"
         f(n, k) = if count(n) > -k
                 then
                   let a, rest = n;
@@ -111,7 +111,7 @@ public class TestParser
                   let a, rest = n;
                       in a;
         -f({point(0,0), point(1,0)}, -1);
-        ");
+        ");});
     }
 
     [Fact]
