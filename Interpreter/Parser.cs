@@ -16,6 +16,7 @@ public class Parser {
     // global
     public Context global_context;
     public Context local_context;
+
     public static List<AST> BUILTINS = new List<AST>{
         new Print(),
         new Cos(),
@@ -397,18 +398,24 @@ public class Parser {
         // overwrite vars in the global ctx in case of conflict
         // with dynamic
         foreach(Variable arg in args) {
-            this.local_context[arg.name] = new VariableDeclaration(name, new AST<object>(AST<object>.DYNAMIC));
+            var decl = new VariableDeclaration(arg.name, new AST<object>(AST<object>.DYNAMIC));
+            this.local_context[arg.name] = decl;
+            arg.declaration = decl;
         }
 
         if (this.current_token.type == Tokens.ASSIGN) {
             this.Eat(Tokens.ASSIGN);
 
+            var node = new FunctionDeclaration(name, args, new AST<object>(AST<object>.DYNAMIC));
             // eval
+            Console.WriteLine(this.local_context["n"]);
             var expr = this.Expr();
+            node.body = expr;
+            // save
             // restore
             this.local_context = this.global_context;
 
-            var node = new FunctionDeclaration(name, args, expr);
+            node = new FunctionDeclaration(name, args, expr);
             this.local_context[node.name] = node;
 
             return node;
@@ -424,6 +431,19 @@ public class Parser {
         FunctionDeclaration fun_decl = null;
         fun_decl = (FunctionDeclaration) this.TypeFor(name, typeof(FunctionDeclaration));
         var fun = new Function(name, args);
+
+        if (fun_decl is not null) {
+            fun_decl.Update(args);
+            if (fun_decl.Type != AST<object>.DYNAMIC) {
+                fun.LockedType = fun_decl.Type;
+            }
+            Exception? exc = fun_decl.Check();
+            if (!(exc is null)) {
+                this.Error(exc);
+            }
+            fun_decl.Restore();
+        }
+        // restore fun_decl for future calls
         fun.declaration = fun_decl;
 
         return fun;

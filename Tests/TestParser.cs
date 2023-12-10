@@ -99,4 +99,41 @@ public class TestParser
     public void TestOperatorCheckPropagation3() {
         Assert.Throws<TypeError>(delegate {this.Prepare("-\"\";");});
     }
+
+    [Fact]
+    public void TestRecursiveTypeCheck() {
+        var result = (BlockNode) this.Prepare(@"
+        f(n, k) = if count(n) > -k
+                then
+                  let a, rest = n;
+                      in f(rest)
+                else
+                  let a, rest = n;
+                      in a;
+        -f({point(0,0), point(1,0)}, -1);
+        ");
+    }
+
+    [Fact]
+    public void TestCheckFnPropagation() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("f(n) = 1+n;f(\"blob\");");});
+    }
+
+    [Fact]
+    public void TestRecFnPropagation() {
+        Assert.Throws<TypeError>(delegate {this.Prepare("f(n) = if (n<1) then n else f(n-1);f(\"blob\");");});
+
+    }
+
+    [Fact]
+    public void TestIdentity() {
+        var result = (BlockNode) this.Prepare("i(n)=n;i(1);i(\"2\");i(point(0,0));");
+        // assert it doesn't throw an error
+    }
+
+    [Fact]
+    public void TestIdentityOps() {
+        var result = (BlockNode) this.Prepare("i(n)=n;i(1);i({1,2,3})+{4,5};");
+        Assert.Throws<TypeError>(delegate {this.Prepare("i(n)=n;i(1);i({1,2,3})+{\"three\",\"four\"};");});
+    }
 }

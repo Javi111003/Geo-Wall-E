@@ -19,6 +19,10 @@ public class Literal<T>: AST<T> {
         return this.val;
     }
 
+    public override string ToString() {
+        return this.val.ToString();
+    }
+
     // no need to override check
 }
 
