@@ -59,8 +59,8 @@ namespace Interpreter
             LineGeometry linea = new LineGeometry();
             myPath.Stroke = Utils.COLORS.Peek();
             myPath.StrokeThickness = 2;
-            // Para el punto inicial (X1, Y1), se usa X1 = 0 y luego resolver la ecuación de la línea para Y1
-            double lineaX1 = 0;
+            // Para el punto inicial (X1, Y1), se usa X1 = -2000 ya que  es donde incia el canvas y luego resolver la ecuación de la línea para Y1
+            double lineaX1 = -2000;
             double lineaY1 = m * lineaX1 + b;
 
             // Para el punto final (X2, Y2) se usa ancho del canvas y luego resolver la ecuación de la línea para Y2

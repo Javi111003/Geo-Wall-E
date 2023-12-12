@@ -26,9 +26,18 @@ namespace Interpreter
 
         public static IEnumerable<Dictionary<string, dynamic>> Intersection(Dictionary<string, dynamic> fig1, Dictionary<string, dynamic> fig2)//intersect
         {
+          
             Geometry geo1= Utils.BuildGeometry(fig1);
             Geometry geo2= Utils.BuildGeometry(fig2);
-            return Utils.GetIntersectionPoints(geo1, geo2);
+            if (fig1["type"] == "circle" && fig2["type"] == "line") 
+            {
+                return Utils.IntersectLineCircle((EllipseGeometry)geo1, geo2);
+            }
+            else if (fig1["type"] == "line" && fig2["type"] == "circle")
+            {
+                return Utils.IntersectLineCircle((EllipseGeometry)geo2, geo1);
+            }
+            else return Utils.GetIntersectionPoints(geo1, geo2);
         }
 
         public static IEnumerable<Dictionary<string, dynamic>> Points(Dictionary<string, dynamic> fig1) // points from a figure

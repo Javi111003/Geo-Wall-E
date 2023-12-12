@@ -27,6 +27,13 @@ namespace Interpreter
         public PaintingArea()
         {
             InitializeComponent();
+            scrollBars.Loaded += (s, e) =>
+            {
+                // Ajusta la barra de desplazamiento horizontal al centro
+                scrollBars.ScrollToHorizontalOffset((MyCanvas.Width / 2)-450);
+                // Ajusta la barra de desplazamiento vertical al centro
+                scrollBars.ScrollToVerticalOffset((MyCanvas.Height / 2)-200);
+            };
         }
         private void DrawFigures(object sender,RoutedEventArgs e)
         {

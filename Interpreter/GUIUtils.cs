@@ -26,9 +26,13 @@ namespace Interpreter
             Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
             Geometry og2 = g2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
 
-            CombinedGeometry cg = new CombinedGeometry(GeometryCombineMode.Intersect, og1, og2);
+            CombinedGeometry cg1 = new CombinedGeometry(GeometryCombineMode.Intersect, og1, og2);
+            CombinedGeometry cg2 = new CombinedGeometry(GeometryCombineMode.Union, og1, og2);
+            CombinedGeometry cg3 = new CombinedGeometry(GeometryCombineMode.Intersect, cg1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0)), cg2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0)));
+            CombinedGeometry cg = new CombinedGeometry(GeometryCombineMode.Union, cg1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0)), cg3.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0)));
 
             PathGeometry pg = cg.GetFlattenedPathGeometry();
+
             Dictionary<string, dynamic>[] result = new Dictionary<string, dynamic>[pg.Figures.Count];
             for (int i = 0; i < pg.Figures.Count; i++)
             {
@@ -264,6 +268,21 @@ namespace Interpreter
                     }; break;
             }
             throw new Exception("These objects not can be intersected");
+        }
+        public static List<Dictionary<string,dynamic>> IntersectLineCircle(EllipseGeometry g1,Geometry g2)
+        {
+            Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
+            var result = new List<Dictionary<string,dynamic>>();
+            var pointToExclude=GetIntersectionPoints(g1, g2).First();
+            result.Add(pointToExclude);
+            Dictionary<string, dynamic> coordP = pointToExclude["params"];
+            var point = PointToGeometry( new Point(coordP["x"], coordP["y"]));
+            var geo1 = new CombinedGeometry(GeometryCombineMode.Exclude,g1,point);
+            var geo = new CombinedGeometry(GeometryCombineMode.Intersect, g1, geo1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0)));
+            var option = new CombinedGeometry(GeometryCombineMode.Exclude, geo1, new EllipseGeometry() { Center = g1.Center, RadiusX=g1.RadiusX-5 , RadiusY=g1.RadiusY-5 });
+            //Falta algo , me sigue devolviendo área en la exclusión
+            result.Add(GetIntersectionPoints(option, g2).First());
+            return result;
         }
     }
 }

@@ -3,12 +3,11 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-      mc:Ignorable="d" 
+      xmlns:sys="clr-namespace:System;assembly=mscorlib" xmlns:local="clr-namespace:Interpreter"
+        mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="IsTimetoPaint"
       >
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
@@ -34,12 +33,9 @@
                     </ToolBar>
                     <Button Content="Clear" Click="ClearCanvas"></Button>
                 </ToolBarPanel>
-                <ToolBarPanel Width="100"/>
-                <mah:HamburgerMenu Grid.Column="0" Grid.Row="0" Content="Hola">
-                </mah:HamburgerMenu>
             </DockPanel>
             <ScrollViewer Name="scrollBars" Grid.Row="1" Grid.Column="1" Margin="35" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Opacity="0.6" VerticalAlignment="Bottom" Grid.IsSharedSizeScope="True" CanContentScroll="True">
-                <Canvas Name="MyCanvas" Width="2000" Height="2000" Grid.Column="1" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Canvas Name="BackgroundCanvas" Width="2000" Height="2000" Grid.Column="1" Grid.Row="1">
                     <Canvas.Background>
                         <DrawingBrush TileMode="Tile" Viewport="0,0,10,10" ViewportUnits="Absolute">
                             <DrawingBrush.Drawing>
@@ -58,10 +54,16 @@
                             </DrawingBrush.Drawing>
                         </DrawingBrush>
                     </Canvas.Background>
+                    <Canvas Name="MyCanvas" Width="2000" Height="2000" Grid.Column="1" Grid.Row="1">
+                        <Canvas.RenderTransform>
+                            <TransformGroup>
+                                <TranslateTransform X="1000" Y="-1000"/>
+                                <ScaleTransform ScaleX="1" ScaleY="-1"/>
+                            </TransformGroup>
+                        </Canvas.RenderTransform>
+                    </Canvas>
                 </Canvas>
             </ScrollViewer>
         </Grid>
-
-
     </Grid>
 </Window>
