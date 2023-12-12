@@ -392,4 +392,19 @@ public class TestIntegration
          var result = this._Interpret("f() = let x = 5; in {x};f();");
          Assert.Equal("{5, }", result.ToString());
     }
+
+    [Fact]
+    public void TestRecursiveSeq() {
+        var result = this._Interpret(@"
+         f(n, k) = if count(n) > -k
+                   then
+                       let a, rest = n;
+                           in f(rest, k)
+                   else
+                       let a, rest = n;
+                           in a;
+        f({1,2,3,4,5}, -2);
+        ");
+        Assert.Equal(4, result);
+    }
 }

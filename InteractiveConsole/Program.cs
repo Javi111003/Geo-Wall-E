@@ -20,10 +20,10 @@ class Master {
 	    Console.WriteLine(e);
 	    return;
 	}
-    Context context = parser.global_context;
+    Context context;
     while (true) {
         Console.Write(">>> ");
-        
+        context = parser.local_context;
         try {
             lexer = new Lexer(Console.ReadLine());
             parser = new Parser(lexer, context);
