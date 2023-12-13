@@ -11,6 +11,8 @@ public class Context : Dictionary<string, dynamic> {
         }
     }
 
+    public Context(Dictionary<string, dynamic> ctx) : base(ctx) {}
+
     public Context() : base() {}
 
     public dynamic this[string key] {

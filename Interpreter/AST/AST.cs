@@ -23,7 +23,7 @@ public class AST {
     }
 
     public override string ToString() {
-       return this.Eval(new Context()).ToString();
+       return this.Type;
     }
 
     // type check
@@ -53,6 +53,7 @@ public class AST<T>: AST {
     public static HashSet<string> SeqOp = new HashSet<string>{SEQUENCE};
     public static HashSet<string> CircOp = new HashSet<string>{CIRCLE, ARC};
     public static HashSet<string> LineOp = new HashSet<string>{LINE, RAY, SEGMENT};
+    public static HashSet<string> PointOp = new HashSet<string>{POINT};
     public static HashSet<string> DynOp = new HashSet<string>{FLOAT, INTEGER, BOOL, STRING, SEQUENCE, DYNAMIC};
 
     public static Dictionary<string, HashSet<string>> Compatible = new Dictionary<string, HashSet<string>>{
@@ -61,12 +62,13 @@ public class AST<T>: AST {
         {BOOL, BoolOp},
         {STRING, StrOp},
         {SEQUENCE, SeqOp},
-        {DYNAMIC, DynOp},
         {CIRCLE, CircOp},
         {ARC, CircOp},
         {LINE, LineOp},
         {SEGMENT, LineOp},
         {RAY, LineOp},
+        {POINT, PointOp},
+        {DYNAMIC, DynOp},
     };
 
     public AST(string Type): base(Type) {}
@@ -140,7 +142,6 @@ public class VariableDeclaration: AST {
     }
 
     public override dynamic Eval(Context ctx) {
-        //ctx[this.name] = this.expression.Eval(ctx);
         var res = this.expression.Eval(ctx);
         // could be this.expression.Type
         if ((res is not null) && (!is_rest) && res.GetType() == typeof(SequenceLiteral)) {
@@ -154,7 +155,7 @@ public class VariableDeclaration: AST {
         if (this.expression is null) {
             return "<(Variable) [name: " + this.name + ", value: undefined]>";
         }
-        return "<(Variable) [name: " + this.name + ", value: " + this.expression.ToString() + "]>";
+        return "<(Variable) [name: " + this.name + ", value: " + this.expression.ToString() + $" type: {this.type}]>";
     }
 
     public override Exception Check() {
@@ -192,7 +193,7 @@ public class Variable : AST {
     }
 
     public override string ToString() {
-        return "<(Variable) [name: " + this.name + "]>";
+        return "<(Variable) [name: " + this.name + $" type: {this.Type}]>";
     }
 }
 
@@ -295,6 +296,32 @@ public class FunctionDeclaration: AST {
     public override Exception Check() {
         return this.body.Check();
     }
+
+    public void Update(BlockNode block) {
+        for (int i = 0; i < this.args.blocks.Count(); i++) {
+            Variable variable = (Variable) this.args.blocks[i];
+            try {
+                AST val = block.blocks[i];
+                if (variable.declaration is null) {
+                    continue;
+                }
+                variable.declaration.expression = val;
+            }
+            catch (System.ArgumentOutOfRangeException) {
+                throw new SyntaxError($"Too many/few arguments for {this.name}");
+            }
+        }
+    }
+
+    public void Restore() {
+        foreach(AST ast in this.args) {
+            var arg = (Variable) ast;
+            if (arg.declaration is null) {
+                continue;
+            }
+            arg.declaration.expression = new AST<object>(AST<object>.DYNAMIC);
+        }
+    }
 }
 
 // same as with Variable
@@ -303,13 +330,17 @@ public class Function : AST {
     public BlockNode args;
 
     public FunctionDeclaration declaration;
+    public string LockedType;
 
     public override string Type {
         get {
-            if (this.declaration is null) {
-                return AST<object>.DYNAMIC;
+            if (this.LockedType is not null) {
+                return this.LockedType;
             }
-            return this.declaration.Type;
+            else if (this.declaration is not null) {
+                return this.declaration.Type;
+            }
+            return AST<object>.DYNAMIC;
         }
     }
 
@@ -318,6 +349,7 @@ public class Function : AST {
         this.args = args;
 
         this.declaration = null;
+        this.LockedType = null;
     }
 
     public override dynamic Eval(Context ctx) {
@@ -350,9 +382,15 @@ public class Function : AST {
         return $"<(Function) [name: {this.name}, args: {this.args}, type: {this.Type}]>";
     }
 
-    // TODO we can pass parameters to check or do something to check the declaration
-    // based on the variables passed
-    // public override Exception Check() {
+    public override Exception Check() {
+        foreach(AST ast in this.args) {
+            var e = ast.Check();
+            if (e is not null) {
+                return e;
+            }
+        }
+        return null;
+    }
 }
 
 public class Lambda : AST {
@@ -387,7 +425,19 @@ public class Lambda : AST {
 
 
     public override Exception Check() {
-        return this.body.Check();
+        var e = this.body.Check();
+        if (e is not null) {
+            return e;
+        }
+        e = this.variables.Check();
+        if (e is not null) {
+            return e;
+        }
+        return null;
+    }
+
+    public override string ToString() {
+        return $"<Lambda({this.variables}, {this.body})>";
     }
 }
 
@@ -399,7 +449,9 @@ public class Conditional : AST {
 
     public override string Type {
         get {
-            return this.thesis.Type;
+            if (this.thesis.Type != AST<object>.DYNAMIC)
+                return this.thesis.Type;
+            return this.antithesis.Type;
         }
     }
 
@@ -446,6 +498,10 @@ public class Conditional : AST {
 
         string msg = $"Type mismatch inside Conditional statement : {this.thesis.Type} != {this.antithesis.Type}";
         return new TypeError(msg);
+    }
+
+    public override string ToString() {
+        return $"<Conditional(if {this.hypothesis}: {this.thesis} else {this.antithesis})>";
     }
 }
 
