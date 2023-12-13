@@ -19,9 +19,9 @@ namespace Interpreter
 {
     public static class Utils//Encapsula métodos auxiliares
     {
-        public static Stack<Brush> COLORS = new Stack<Brush>(new Brush[]{Brushes.Black});
+        public static Stack<Brush> COLORS = new Stack<Brush>(new Brush[] { Brushes.Black });
 
-        public static Dictionary<string,dynamic>[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
+        public static Dictionary<string, dynamic>[] GetIntersectionPoints(Geometry g1, Geometry g2)//Hallar intersección entre dos Geometrys
         {
             Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
             Geometry og2 = g2.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
@@ -75,7 +75,7 @@ namespace Interpreter
                 case "gren": COLORS.Push(Brushes.Green); break;
                 case "magenta": COLORS.Push(Brushes.Magenta); break;
 
-                default: MessageBox.Show("The color selected is not a valid color brush.");break;
+                default: MessageBox.Show("The color selected is not a valid color brush."); break;
             }
 
         }
@@ -86,46 +86,61 @@ namespace Interpreter
                 COLORS.Pop();
             }
         }
-        public static IEnumerable<Point> Points(Geometry figure)//puntos aleatorios de figure
+        public static IEnumerable<Dictionary<string,dynamic>> Points(Geometry figure)//puntos aleatorios de figure
         {
             if (figure is LineGeometry line)
             {
                 double m = (line.EndPoint.Y - line.StartPoint.Y) / (line.EndPoint.X - line.StartPoint.X); // Calcula la pendiente
                 double b = line.StartPoint.Y - (m * line.StartPoint.X); // Calcula el intercepto
-               
-                    for (int i = 0; i < 10; i++)
-                    {
-                    double x = Random.Shared.NextDouble() * 10; // Genera un número aleatorio entre el inicio y el fin de la línea
-                        double y = m * x + b;
-                        yield return new Point(x, y);
-                    }               
+
+                for (int i = 0; i < 10; i++)
+                {
+                    double x = Random.Shared.Next((int)line.StartPoint.X, (int)line.EndPoint.X); // Genera un número aleatorio entre el inicio y el fin de la línea
+                    double y = m * x + b;
+                    yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x },{ "y", y } } } };
+                }
             }
             else if (figure is PathGeometry arc)
             {
                 //Es un arco
+                Random random = new Random();
+
+                PathFigure pathFigure = arc.Figures[0];
+                ArcSegment arcSegment = (ArcSegment)pathFigure.Segments[0];
+
+                // Calcula el ángulo del arco
+                double angle = Math.Atan2(arcSegment.Point.Y - pathFigure.StartPoint.Y, arcSegment.Point.X - pathFigure.StartPoint.X);
+
+                // Genera un ángulo aleatorio dentro del rango del arco
+                double randomAngle = random.NextDouble() * angle;
+
+                double x = pathFigure.StartPoint.X + arcSegment.Size.Width * Math.Cos(randomAngle);
+                double y = pathFigure.StartPoint.Y + arcSegment.Size.Height * Math.Sin(randomAngle);
+
+                yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x },{ "y", y } } } }; ;
             }
             else if (figure is EllipseGeometry circle) //Es un circulo
             {
                 if (circle.RadiusX == 4.99)//Descartar que sea la representación geométrica de un punto
                 {
-                    yield return circle.Center;
+                    yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", circle.Center.X },{ "y", circle.Center.Y } } } }; ;
                 }
-                else 
-                { 
-                   for (int i = 0; i < 10; i++)//Puntos aleatorios de la circunferencia
-                   {
+                else
+                {
+                    for (int i = 0; i < 10; i++)//Puntos aleatorios de la circunferencia
+                    {
                         double angle = Random.Shared.NextDouble() * 2 * Math.PI; // Genera un ángulo aleatorio entre 0 y 2π
                         double x = circle.Center.X + circle.RadiusX * Math.Cos(angle); // Calcula la coordenada x del punto
                         double y = circle.Center.Y + circle.RadiusX * Math.Sin(angle); // Calcula la coordenada y del punto
-                        yield return new Point(x, y);
-                   }
+                        yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x },{ "y", y } } } }; ;
+                    }
                 }
             }
-           
+
         }
         public static double[] Randoms()//Puntos aleatorios entre cero y uno 
         {
-            int size = Random.Shared.Next(2,10);
+            int size = Random.Shared.Next(2, 10);
             double[] result = new double[size];
 
             int c = 0;
@@ -137,20 +152,23 @@ namespace Interpreter
             return result;
         }
 
-        public static string SerialPath() {
+        public static string SerialPath()
+        {
             DirectoryInfo BASE_DIR = new DirectoryInfo(
-                Assembly.GetAssembly(typeof (_Interpreter)).Location
+                Assembly.GetAssembly(typeof(_Interpreter)).Location
             ).Parent.Parent.Parent.Parent.Parent;
 
             return System.IO.Path.Join(BASE_DIR.ToString(), "Serials");
         }
 
-        public static string SerialFile(string filename) {
+        public static string SerialFile(string filename)
+        {
             return System.IO.Path.Join(SerialPath(), $"{filename}.xaml");
         }
 
-        public static string[] SerialFiles() {
-             return System.IO.Directory.GetFiles(SerialPath(), "*.xaml");
+        public static string[] SerialFiles()
+        {
+            return System.IO.Directory.GetFiles(SerialPath(), "*.xaml");
         }
 
         public static void SavePath(System.Windows.Shapes.Path path, string fileName)//Serializar la figura para poder ser representada posteriormente
@@ -167,7 +185,8 @@ namespace Interpreter
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
             // Deserializa y añade cada Path al Canvas
-            try {
+            try
+            {
                 foreach (string filePath in SerialFiles())
                 {
                     var xaml = System.IO.File.ReadAllText(filePath);
@@ -175,7 +194,8 @@ namespace Interpreter
                     myCanvas.Children.Add(path);
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 MessageBox.Show(e.ToString());
             }
         }
@@ -186,7 +206,7 @@ namespace Interpreter
                 System.IO.File.Delete(filepath);
             }
         }
-        public static Geometry BuildGeometry(Dictionary<string,dynamic> figure)
+        public static Geometry BuildGeometry(Dictionary<string, dynamic> figure)
         {
             string type = figure["type"];
 
@@ -269,20 +289,37 @@ namespace Interpreter
             }
             throw new Exception("These objects not can be intersected");
         }
-        public static List<Dictionary<string,dynamic>> IntersectLineCircle(EllipseGeometry g1,Geometry g2)
+        public static List<Dictionary<string, dynamic>> IntersectLineCircle(EllipseGeometry ellipse, LineGeometry line)
         {
-            Geometry og1 = g1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0));
-            var result = new List<Dictionary<string,dynamic>>();
-            var pointToExclude=GetIntersectionPoints(g1, g2).First();
-            result.Add(pointToExclude);
-            Dictionary<string, dynamic> coordP = pointToExclude["params"];
-            var point = PointToGeometry( new Point(coordP["x"], coordP["y"]));
-            var geo1 = new CombinedGeometry(GeometryCombineMode.Exclude,g1,point);
-            var geo = new CombinedGeometry(GeometryCombineMode.Intersect, g1, geo1.GetWidenedPathGeometry(new Pen(Brushes.Black, 1.0)));
-            var option = new CombinedGeometry(GeometryCombineMode.Exclude, geo1, new EllipseGeometry() { Center = g1.Center, RadiusX=g1.RadiusX-5 , RadiusY=g1.RadiusY-5 });
-            //Falta algo , me sigue devolviendo área en la exclusión
-            result.Add(GetIntersectionPoints(option, g2).First());
-            return result;
+
+            float dx = (float)(line.EndPoint.X - line.StartPoint.X);
+            float dy = (float)(line.EndPoint.Y - line.StartPoint.Y);
+
+            var a = Math.Pow(dx, 2) + Math.Pow(dy, 2);
+            var b = 2 * dx * (line.StartPoint.X - ellipse.Center.X) + 2 * dy * (line.StartPoint.Y - ellipse.Center.Y);
+            var c = Math.Pow(line.StartPoint.X - ellipse.Center.X, 2) + Math.Pow(line.StartPoint.Y - ellipse.Center.Y, 2) - Math.Pow(ellipse.RadiusX, 2);
+
+            var D = Math.Pow(b, 2) - 4 * a * c;
+
+            if (D < 0)
+            {
+                return new List<Dictionary<string, dynamic>>();
+            }
+
+            float t1 = (float)((-b + Math.Sqrt(D)) / (2 * a));
+            float x1 = (float)(line.StartPoint.X + t1 * dx);
+            float y1 = (float)(line.StartPoint.Y + t1 * dy);
+
+            if (D == 0)
+            {
+                return new List<Dictionary<string, dynamic>>() { new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x1 }, { "y", y1 } } } } };
+            }
+
+            float t2 = (float)((-b - Math.Sqrt(D)) / (2 * a));
+            float x2 = (float)(line.StartPoint.X + t2 * dx);
+            float y2 = (float)(line.StartPoint.Y + t2 * dy);
+
+            return new List<Dictionary<string, dynamic>>() { new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x1 }, { "y", y1 } } } }, new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x2 }, { "y", y2 } } } } };
         }
     }
 }

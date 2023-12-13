@@ -98,7 +98,11 @@ namespace Interpreter
             double lineaY1 = m * lineaX1 + b;
 
             // Para el punto final (X2, Y2) se usa ancho del canvas y luego resolver la ecuación de la línea para Y2
-            double lineaX2 = 2000;//MyCanvas.ActualWidth;
+            double lineaX2 = -2000;//MyCanvas.ActualWidth;
+            if (p1.X - p2.X < 0)//pendiente negativa 
+            {
+                lineaX2 = 2000;
+            }
             double lineaY2 = m * lineaX2 + b;
 
             linea.StartPoint = new Point(lineaX1, lineaY1);

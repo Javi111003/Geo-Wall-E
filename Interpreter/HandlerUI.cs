@@ -16,7 +16,6 @@ namespace Interpreter
 {
     public static class HandlerUI
     {
-        public static Dictionary<int, Geometry> DrawedFigures = new Dictionary<int, Geometry>();
         public static string Code { get; set; }
 
         public static int Measure(Dictionary<string, dynamic> p1, Dictionary<string, dynamic> p2)//medida entre dos puntos 
@@ -29,22 +28,21 @@ namespace Interpreter
           
             Geometry geo1= Utils.BuildGeometry(fig1);
             Geometry geo2= Utils.BuildGeometry(fig2);
-            if (fig1["type"] == "circle" && fig2["type"] == "line") 
+            if (fig1["type"] == "circle" && (fig2["type"] == "line" || fig2["type"] == "segment" || fig2["type"]=="ray")) 
             {
-                return Utils.IntersectLineCircle((EllipseGeometry)geo1, geo2);
+                return Utils.IntersectLineCircle((EllipseGeometry)geo1,(LineGeometry) geo2);
             }
-            else if (fig1["type"] == "line" && fig2["type"] == "circle")
+            else if ((fig1["type"] == "line" || fig1["type"] == "ray" || fig1["type"]=="segment")&& fig2["type"] == "circle")
             {
-                return Utils.IntersectLineCircle((EllipseGeometry)geo2, geo1);
+                return Utils.IntersectLineCircle((EllipseGeometry)geo2, (LineGeometry)geo1);
             }
             else return Utils.GetIntersectionPoints(geo1, geo2);
         }
 
         public static IEnumerable<Dictionary<string, dynamic>> Points(Dictionary<string, dynamic> fig1) // points from a figure
         {
-            // FIXME
-            //return Utils.GetIntersectionPoints(fig1, fig2);
-            yield return GetPoint();
+            var geo = Utils.BuildGeometry(fig1);
+            return Utils.Points(geo);
         }
 
         public static void Color(string color)
