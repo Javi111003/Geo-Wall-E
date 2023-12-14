@@ -335,30 +335,35 @@ namespace Interpreter {
     }
 
     // draw
-    class DrawDeclBlockNode : UnaryOperation<Drawable, object> {
+    class DrawDeclBlockNode : AST<object> {
         AST label;
+        AST Block;
 
-        public DrawDeclBlockNode(AST block, AST label) : base(block) {
-            this.label = label;
+        public DrawDeclBlockNode(AST block, AST label=null) : base(AST<object>.DYNAMIC) {
+           this.Block = block;
+            if(label is null)
+            {
+                this.label = new StringLiteral("");
+            }
+            else
+            {
+                this.label=label;
+            }
         }
 
         public override dynamic Eval(Context ctx) {
-            var block = this.block.Eval(ctx);
+            var block = this.Block.Eval(ctx);
             if (block.GetType() == typeof(SequenceLiteral)) {
                 SequenceLiteral seq = (SequenceLiteral) block;
                 foreach(AST ast in seq.Val()) {
                     Drawable fig = (Drawable) ast.Eval(ctx);
-                    this.Operation(fig);
+                    HandlerUI.Draw(fig.GetDrawParams(), this.label.Eval(ctx));
                 }
             }
             else {
-                return this.Operation(this.block.Eval(ctx));
+                HandlerUI.Draw(this.Block.Eval(ctx).GetDrawParams(),this.label.Eval(ctx));
+                return null;
             }
-            return null;
-        }
-
-        public override object Operation(Drawable fig) {
-            HandlerUI.Draw(fig.GetDrawParams(), this.label.ToString());
             return null;
         }
     }
