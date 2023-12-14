@@ -65,7 +65,7 @@ namespace Interpreter
                 case "point":
                     {
                         Dictionary<string, dynamic> parametros = figure["params"];
-                        Drawer.DrawPoint(new Point(parametros["x"], parametros["y"]));
+                        Drawer.DrawPoint(new Point(parametros["x"], parametros["y"]),label);
                     }; break;
                 case "line":
                     {
@@ -76,7 +76,7 @@ namespace Interpreter
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
                         Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
-                        Drawer.DrawLine(punto1, punto2);
+                        Drawer.DrawLine(punto1, punto2, label);
                     }; break;
                 case "segment":
                     {
@@ -87,7 +87,7 @@ namespace Interpreter
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
                         Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
-                        Drawer.DrawSegment(punto1, punto2);
+                        Drawer.DrawSegment(punto1, punto2,label);
                     }; break;
                 case "ray":
                     {
@@ -98,7 +98,7 @@ namespace Interpreter
                         var punto1 = new Point(coordP1["x"], coordP1["y"]);
                         Dictionary<string, dynamic> coordP2 = p2["params"];
                         var punto2 = new Point(coordP2["x"], coordP2["y"]);
-                        Drawer.DrawRay(punto1, punto2);
+                        Drawer.DrawRay(punto1, punto2, label);
                     }; break;
                 case "circle":
                     {
@@ -107,7 +107,7 @@ namespace Interpreter
                         Dictionary<string, dynamic> coord = center["params"];
                         var centro = new Point(coord["x"], coord["y"]);
                         float radius = circle["radius"];
-                        Drawer.DrawCircle(centro, radius);
+                        Drawer.DrawCircle(centro, radius,label);
                     }; break;
                 case "arc":
                     {
@@ -122,7 +122,7 @@ namespace Interpreter
                         Dictionary<string, dynamic> coordP3 = p3["params"];
                         var punto3 = new Point(coordP3["x"], coordP3["y"]);
                         float measure = arc["measure"];
-                        Drawer.DrawArc(center, punto2, punto3, measure);
+                        Drawer.DrawArc(center, punto2, punto3, measure,label);
                     }; break;
             }
         }

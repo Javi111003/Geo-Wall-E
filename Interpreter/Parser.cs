@@ -223,7 +223,7 @@ public class Parser {
                     new Figures.Point(param["p1"])
                  ),
                 new Literal<Figures.Point>(
-                    new Figures.Point(param["p1"])
+                    new Figures.Point(param["p2"])
                 )
             };
         }

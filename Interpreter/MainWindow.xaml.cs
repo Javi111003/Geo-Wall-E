@@ -39,6 +39,7 @@ namespace Interpreter
         private void Build_Click(object sender, RoutedEventArgs e)//Botón para compilar
         {
             Utils.ClearSerials();
+            Drawer.Labels.Clear();
             var retorno = EvalHandler.Eval(myTextBox.Text);
             MessageBox.Show("the app is building");
             List<string> Errors = new();

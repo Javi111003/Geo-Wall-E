@@ -13,7 +13,9 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Point = System.Windows.Point;
-
+using System.Reflection.Emit;
+using System.Windows.Controls.Primitives;
+using Label = System.Windows.Controls.Label;
 
 namespace Interpreter
 {
@@ -90,13 +92,13 @@ namespace Interpreter
         {
             if (figure is LineGeometry line)
             {
-                double m = (line.EndPoint.Y - line.StartPoint.Y) / (line.EndPoint.X - line.StartPoint.X); // Calcula la pendiente
-                double b = line.StartPoint.Y - (m * line.StartPoint.X); // Calcula el intercepto
+                float m = (float)((line.EndPoint.Y - line.StartPoint.Y) / (line.EndPoint.X - line.StartPoint.X)); // Calcula la pendiente
+                float b = (float)(line.StartPoint.Y - (m * line.StartPoint.X)); // Calcula el intercepto
 
                 for (int i = 0; i < 10; i++)
                 {
-                    double x = Random.Shared.Next((int)line.StartPoint.X, (int)line.EndPoint.X); // Genera un número aleatorio entre el inicio y el fin de la línea
-                    double y = m * x + b;
+                    float x = Random.Shared.Next((int)line.StartPoint.X, (int)line.EndPoint.X); // Genera un número aleatorio entre el inicio y el fin de la línea
+                    float y = m * x + b;
                     yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x },{ "y", y } } } };
                 }
             }
@@ -109,13 +111,13 @@ namespace Interpreter
                 ArcSegment arcSegment = (ArcSegment)pathFigure.Segments[0];
 
                 // Calcula el ángulo del arco
-                double angle = Math.Atan2(arcSegment.Point.Y - pathFigure.StartPoint.Y, arcSegment.Point.X - pathFigure.StartPoint.X);
+                float angle = (float)Math.Atan2(arcSegment.Point.Y - pathFigure.StartPoint.Y, arcSegment.Point.X - pathFigure.StartPoint.X);
 
                 // Genera un ángulo aleatorio dentro del rango del arco
-                double randomAngle = random.NextDouble() * angle;
+                float randomAngle = (float)random.NextDouble() * angle;
 
-                double x = pathFigure.StartPoint.X + arcSegment.Size.Width * Math.Cos(randomAngle);
-                double y = pathFigure.StartPoint.Y + arcSegment.Size.Height * Math.Sin(randomAngle);
+                float x =(float) (pathFigure.StartPoint.X + arcSegment.Size.Width * Math.Cos(randomAngle));
+                float y = (float)(pathFigure.StartPoint.Y + arcSegment.Size.Height * Math.Sin(randomAngle));
 
                 yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x },{ "y", y } } } }; ;
             }
@@ -123,30 +125,30 @@ namespace Interpreter
             {
                 if (circle.RadiusX == 4.99)//Descartar que sea la representación geométrica de un punto
                 {
-                    yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", circle.Center.X },{ "y", circle.Center.Y } } } }; ;
+                    yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", (float)circle.Center.X },{ "y", (float)circle.Center.Y } } } }; ;
                 }
                 else
                 {
                     for (int i = 0; i < 10; i++)//Puntos aleatorios de la circunferencia
                     {
-                        double angle = Random.Shared.NextDouble() * 2 * Math.PI; // Genera un ángulo aleatorio entre 0 y 2π
-                        double x = circle.Center.X + circle.RadiusX * Math.Cos(angle); // Calcula la coordenada x del punto
-                        double y = circle.Center.Y + circle.RadiusX * Math.Sin(angle); // Calcula la coordenada y del punto
+                        float angle = (float)(Random.Shared.NextDouble() * 2 * Math.PI); // Genera un ángulo aleatorio entre 0 y 2π
+                        float x =(float) (circle.Center.X + circle.RadiusX * Math.Cos(angle)); // Calcula la coordenada x del punto
+                        float y =(float) (circle.Center.Y + circle.RadiusX * Math.Sin(angle)); // Calcula la coordenada y del punto
                         yield return new Dictionary<string, dynamic>() { { "type", "point" }, { "params", new Dictionary<string, dynamic>() { { "x", x },{ "y", y } } } }; ;
                     }
                 }
             }
 
         }
-        public static double[] Randoms()//Puntos aleatorios entre cero y uno 
+        public static float[] Randoms()//Puntos aleatorios entre cero y uno 
         {
             int size = Random.Shared.Next(2, 10);
-            double[] result = new double[size];
+            float[] result = new float[size];
 
             int c = 0;
             while (c < size)
             {
-                result[c] = Random.Shared.NextDouble();
+                result[c] = Random.Shared.NextSingle();
                 c++;
             }
             return result;
@@ -184,6 +186,8 @@ namespace Interpreter
         }
         public static void LoadAllPaths(Canvas myCanvas)//deserializar 
         {
+            LoadAllLabels(myCanvas);//añade los labels asociados a cada figura
+           
             // Deserializa y añade cada Path al Canvas
             try
             {
@@ -197,6 +201,25 @@ namespace Interpreter
             catch (Exception e)
             {
                 MessageBox.Show(e.ToString());
+            }
+        }
+        private static void LoadAllLabels(Canvas myCanvas)//añade los labels en su posicion al canvas 
+        {
+            ScaleTransform scaleTransform = new ScaleTransform();
+            scaleTransform.ScaleY = -1;
+
+            foreach (var pair in Drawer.Labels)
+            {
+                var label = pair.Key;
+                // Aplicar la transformación de rotación al Label 
+                label.RenderTransform = scaleTransform;
+                //posicionar posteriormente en el canvas
+                var posLeft = Drawer.Labels[pair.Key].Item1;
+                var posUp = Drawer.Labels[pair.Key].Item2;
+                //añadir al canvas 
+                myCanvas.Children.Add(pair.Key);
+                Canvas.SetLeft(label, posLeft);
+                Canvas.SetTop(label, posUp);
             }
         }
         public static void ClearSerials()//eliminar los archivos de la anterior compilación
@@ -275,17 +298,32 @@ namespace Interpreter
                 case "arc":
                     {
                         Dictionary<string, dynamic> arc = figure["params"];
-                        Dictionary<string, dynamic> centro = arc["center"];
-                        Dictionary<string, dynamic> coord = centro["params"];
-                        var center = new Point(coord["x"], coord["y"]);
+                        Dictionary<string, dynamic> center = arc["center"];
+                        Dictionary<string, dynamic> coord = center["params"];
+                        var centro = new Point(coord["x"], coord["y"]);
                         Dictionary<string, dynamic> p2 = arc["p2"];
                         Dictionary<string, dynamic> coordP2 = p2["params"];
-                        var punto2 = new Point(coordP2["x"], coordP2["y"]);
+                        var inicio = new Point(coordP2["x"], coordP2["y"]);
                         Dictionary<string, dynamic> p3 = arc["p3"];
                         Dictionary<string, dynamic> coordP3 = p3["params"];
-                        var punto3 = new Point(coordP3["x"], coordP3["y"]);
+                        var fin = new Point(coordP3["x"], coordP3["y"]);
                         float measure = arc["measure"];
-                    }; break;
+                        double anguloInicio = Math.Atan2(inicio.Y - centro.Y, inicio.X - centro.X) * 180.0 / Math.PI;
+                        double anguloFin = Math.Atan2(fin.Y - centro.Y, fin.X - centro.X) * 180.0 / Math.PI;
+                        // Crear el arco
+                        PathGeometry arco = new PathGeometry();
+                        PathFigure pathFigure = new PathFigure();
+                        pathFigure.StartPoint = inicio;
+                        arco.Figures.Add(pathFigure);
+                        ArcSegment arcSegment = new ArcSegment();
+                        arcSegment.Point = fin;
+                        arcSegment.Size = new Size(measure, measure);
+                        arcSegment.IsLargeArc = Math.Abs(anguloFin - anguloInicio) > 180.0;
+                        arcSegment.SweepDirection = SweepDirection.Clockwise;
+                        pathFigure.Segments.Add(arcSegment);
+                        return arco;
+                        
+                    }
             }
             throw new Exception("These objects not can be intersected");
         }
