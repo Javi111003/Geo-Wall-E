@@ -297,9 +297,16 @@ namespace Interpreter {
     // intersect
     class IntersectDeclBlockNode : GenDeclBlockNode<Drawable, SequenceLiteral> {
 
-        public IntersectDeclBlockNode(AST f1, AST f2) : base(f1, f2) {}
+        protected SequenceLiteral cache;
+
+        public IntersectDeclBlockNode(AST f1, AST f2) : base(f1, f2) {
+            this.cache = null;
+        }
 
         public override SequenceLiteral Operation(Drawable f1, Drawable f2) {
+            if (cache is not null) {
+                return cache;
+            }
             var ls = new List<AST>();
             foreach(
                 Dictionary<string, dynamic> point in HandlerUI.Intersection(f1.GetDrawParams(), f2.GetDrawParams())
@@ -307,12 +314,13 @@ namespace Interpreter {
                 ls.Add(new Literal<Figures.Point>(new Figures.Point((Dictionary<string, dynamic>) point)));
             }
 
-            return new SequenceLiteral(
+            this.cache = new SequenceLiteral(
                 new Terms(
-                    // static typing and its consequences have been a disaster for the human race
                     ls
                 )
              );
+
+            return this.cache;
         }
     }
 

@@ -2,10 +2,6 @@ namespace Interpreter;
 
 
 public class Parser {
-    // FunctionMap -> Dict with declared functions (they are global)
-    // VariableMap -> Dict with global variables <string, List<VariableDeclaration>>
-    //
-    // We can use them to infer the type
     Lexer lexer;
     Token current_token;
 
@@ -13,9 +9,8 @@ public class Parser {
     Token[] tokens;
     int index;
 
-    // global
-    public Context global_context;
     public Context local_context;
+
     public static List<AST> BUILTINS = new List<AST>{
         new Print(),
         new Cos(),
@@ -56,10 +51,10 @@ public class Parser {
         this.current_token = this.GetNextToken();
 
         if (context is null) {
-            this.global_context = this.local_context = new Context(Parser.BUILTINS);
+            this.local_context = new Context(Parser.BUILTINS);
         }
         else {
-            this.global_context = this.local_context = context;
+            this.local_context = context;
         }
 
         // wheter to throw errors or not
@@ -188,7 +183,9 @@ public class Parser {
         this.Eat(Tokens.LET);
         var nodes = new List<AST>();
         // we want a separate context for local vars in the lambda
-        this.local_context = this.global_context.Clone();
+        // XXX this changes the references
+
+        var temp = this.local_context.Clone();
         while (this.current_token.type != Tokens.IN) {
             nodes.Add(this.ParseNode());
             this.Eat(Tokens.END);
@@ -198,7 +195,7 @@ public class Parser {
         var node = new Lambda(new BlockNode(nodes), this.Expr());
 
         // restore old context
-        this.local_context = this.global_context;
+        this.local_context = temp;
 
         return node;
     }
@@ -389,26 +386,34 @@ public class Parser {
         // args are variables so we can use them here too
         // we don't check types here (no need to) so to avoid any conflicts
         // we nullify the context
+        var temp = this.local_context.Clone();
         this.local_context = new Context();
+
         BlockNode args = this.Arguments();
-        // clone
-        this.local_context = this.global_context.Clone();
+        // clone again
+        this.local_context = temp;
+        temp = this.local_context.Clone();
 
         // overwrite vars in the global ctx in case of conflict
         // with dynamic
         foreach(Variable arg in args) {
-            this.local_context[arg.name] = new VariableDeclaration(name, new AST<object>(AST<object>.DYNAMIC));
+            var decl = new VariableDeclaration(arg.name, new AST<object>(AST<object>.DYNAMIC));
+            this.local_context[arg.name] = decl;
+            arg.declaration = decl;
         }
 
         if (this.current_token.type == Tokens.ASSIGN) {
             this.Eat(Tokens.ASSIGN);
 
+            var node = new FunctionDeclaration(name, args, new AST<object>(AST<object>.DYNAMIC));
             // eval
             var expr = this.Expr();
+            node.body = expr;
+            // save
             // restore
-            this.local_context = this.global_context;
+            this.local_context = temp;
 
-            var node = new FunctionDeclaration(name, args, expr);
+            node = new FunctionDeclaration(name, args, expr);
             this.local_context[node.name] = node;
 
             return node;
@@ -424,6 +429,19 @@ public class Parser {
         FunctionDeclaration fun_decl = null;
         fun_decl = (FunctionDeclaration) this.TypeFor(name, typeof(FunctionDeclaration));
         var fun = new Function(name, args);
+
+        if (fun_decl is not null) {
+            fun_decl.Update(args);
+            if (fun_decl.Type != AST<object>.DYNAMIC) {
+                fun.LockedType = fun_decl.Type;
+            }
+            Exception? exc = fun_decl.Check();
+            if (!(exc is null)) {
+                this.Error(exc);
+            }
+            fun_decl.Restore();
+        }
+        // restore fun_decl for future calls
         fun.declaration = fun_decl;
 
         return fun;
