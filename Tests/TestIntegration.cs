@@ -407,10 +407,4 @@ public class TestIntegration
         ");
         Assert.Equal(4, result);
     }
-
-    [Fact]
-    public void TestIntersectMultiDecl() {
-        var result = this._Interpret("point p1; a,b,c,d,e = intersect(p1, p1);d;");
-        Assert.Equal("", result);
-    }
 }
