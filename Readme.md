@@ -1,7 +1,6 @@
 WALL-E!! GEO WALL-E Geometrical Asistant
 ===========================
 ## Colaboradores
-- [Luis E. Amát Cárdenas]
 - [Javier A. González Díaz]
 
 ## Cuál es el propósito de este software_
